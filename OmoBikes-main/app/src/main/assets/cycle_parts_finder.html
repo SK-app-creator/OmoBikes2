@@ -1,0 +1,821 @@
+<body>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cycle Part Finder</title>
+
+
+
+
+<div id="cycle-finder-container">
+
+
+  <!-- STEP 0: Welcome Page -->
+  <div id="step-0" class="finder-step welcome-page">
+    <div class="welcome-inner">
+      <div class="welcome-emoji">🚲</div>
+      <h1 class="welcome-headline">Not sure which part fits your cycle or your budget?</h1>
+      <p class="welcome-sub">Answer 2 quick questions and we'll show you exactly what to buy.</p>
+      <button class="cta-btn" onclick="showStep(1)">Find My Part →</button>
+    </div>
+  </div>
+
+
+  <div id="step-1" class="finder-step" style="display:none;">
+    <button onclick="goBack(0)" class="back-btn">← Back</button>
+    <h2>Select a Cycle Part</h2>
+    <div class="grid-container" id="parts-grid"></div>
+  </div>
+
+
+  <div id="step-2" class="finder-step" style="display:none;">
+    <button onclick="goBack(1)" class="back-btn">← Back</button>
+    <h2>Select Your Budget</h2>
+    <div class="grid-container" id="budget-grid"></div>
+  </div>
+
+
+  <div id="step-3" class="finder-step" style="display:none;">
+    <button onclick="goBack(2)" class="back-btn">← Back</button>
+    <h2>Recommended Products</h2>
+    <div class="grid-container" id="product-grid"></div>
+  </div>
+</div>
+
+
+<style>
+  /* Base Container Styles */
+  #cycle-finder-container { font-family: sans-serif; max-width: 1000px; margin: 0 auto; text-align: center; padding: 20px; }
+  
+  /* Responsive Grid — 2 cards minimum on mobile */
+  .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; margin-top: 20px; }
+  
+  /* UPDATED CARD STYLE (Centering icons and text) */
+  .card { 
+    border: 1px solid #ddd; 
+    padding: 25px; 
+    cursor: pointer; 
+    transition: 0.3s; 
+    border-radius: 12px; 
+    min-height: 120px; /* Slightly taller for icons */
+    display: flex; 
+    flex-direction: column; 
+    justify-content: center; /* Vertical Center */
+    align-items: center; /* Horizontal Center */
+    color: #333; /* Dark text */
+    box-sizing: border-box;
+  }
+  
+  /* Specific styling for the generated icon element */
+  .card-icon {
+    font-size: 2.2rem; /* Size of the icon/emoji */
+    margin-bottom: 8px; /* Space between icon and text */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  /* Text styling inside the card */
+  .card h3 { margin: 0; font-size: 1.1rem; font-weight: bold; }
+  
+  /* Style for Step 3 View Details */
+  .card p { margin: 5px 0 0 0; font-size: 0.85rem; font-weight: normal; opacity: 0.8; }
+
+
+  /* Hover and Interaction Effects */
+  .card:hover { 
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    filter: brightness(0.9);
+  }
+
+
+  /* Back button styling */
+  .back-btn { float: left; background: #eee; border: 1px solid #ccc; padding: 5px 15px; border-radius: 20px; cursor: pointer; margin-bottom: 10px; font-weight: bold; }
+  .no-results { grid-column: 1 / -1; padding: 40px; background: #f9f9f9; border-radius: 12px; }
+
+
+  /* ── Welcome Page (Step 0) ── */
+  .welcome-page {
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+    border-radius: 20px;
+    padding: 0;
+    min-height: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .welcome-inner {
+    padding: 48px 32px;
+    max-width: 520px;
+    margin: 0 auto;
+  }
+  .welcome-emoji {
+    font-size: 3.5rem;
+    margin-bottom: 20px;
+    line-height: 1;
+  }
+  .welcome-headline {
+    font-size: 1.55rem;
+    font-weight: 800;
+    color: #1b5e20;
+    margin: 0 0 16px 0;
+    line-height: 1.35;
+  }
+  .welcome-sub {
+    font-size: 1rem;
+    color: #388e3c;
+    margin: 0 0 32px 0;
+    line-height: 1.6;
+  }
+  .cta-btn {
+    background: #2e7d32;
+    color: #fff;
+    border: none;
+    padding: 14px 36px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    box-shadow: 0 4px 14px rgba(46,125,50,0.35);
+  }
+  .cta-btn:hover {
+    background: #1b5e20;
+    transform: translateY(-2px);
+  }
+
+
+  /* Mobile tweaks */
+  @media (max-width: 480px) {
+    .welcome-headline { font-size: 1.25rem; }
+    .welcome-inner { padding: 36px 20px; }
+    .grid-container { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+
+
+<script>
+/** * DATA CONFIGURATION
+ * This section now includes "icon" definitions using simple text/emojis.
+ * (I have matched the style of your image_0.png using universal symbols).
+ */
+
+
+const P = '#222', S = '#888', BG = '#fff';
+ 
+const gearsSVG = `<svg viewBox="0 0 60 60" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="24" cy="32" r="16" fill="none" stroke="${P}" stroke-width="6" stroke-dasharray="5.5 4.5"/>
+  <circle cx="24" cy="32" r="16" fill="none" stroke="${P}" stroke-width="3"/>
+  <circle cx="24" cy="32" r="7" fill="none" stroke="${P}" stroke-width="2.5"/>
+  <circle cx="24" cy="32" r="3" fill="${P}"/>
+  <circle cx="43" cy="18" r="10" fill="none" stroke="${S}" stroke-width="4" stroke-dasharray="4 3.5"/>
+  <circle cx="43" cy="18" r="10" fill="none" stroke="${S}" stroke-width="2.5"/>
+  <circle cx="43" cy="18" r="4.5" fill="none" stroke="${S}" stroke-width="2"/>
+  <circle cx="43" cy="18" r="2" fill="${S}"/>
+</svg>`;
+ 
+const stemSVG = `<svg viewBox="0 0 60 60" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+  <rect x="22" y="4" width="16" height="10" rx="3" fill="${P}"/>
+  <circle cx="30" cy="9" r="3.5" fill="${BG}" stroke="${S}" stroke-width="1.5"/>
+  <rect x="26" y="13" width="10" height="22" rx="2" fill="${S}" transform="rotate(-20 31 24)"/>
+  <rect x="36" y="30" width="18" height="12" rx="3" fill="${P}"/>
+  <circle cx="45" cy="36" r="4" fill="${BG}" stroke="${S}" stroke-width="1.5"/>
+  <line x1="24" y1="7" x2="36" y2="7" stroke="${S}" stroke-width="1" stroke-linecap="round"/>
+  <line x1="38" y1="33" x2="52" y2="33" stroke="${S}" stroke-width="1" stroke-linecap="round"/>
+</svg>`;
+ 
+const forkSVG = `<svg viewBox="0 0 60 60" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+  <rect x="27" y="2" width="6" height="12" rx="1.5" fill="${P}"/>
+  <rect x="14" y="14" width="32" height="5" rx="1.5" fill="${P}"/>
+  <rect x="15" y="19" width="7" height="18" rx="1.5" fill="${S}"/>
+  <rect x="13" y="37" width="11" height="16" rx="2" fill="${P}"/>
+  <rect x="38" y="19" width="7" height="18" rx="1.5" fill="${S}"/>
+  <rect x="36" y="37" width="11" height="16" rx="2" fill="${P}"/>
+  <path fill="none" stroke="${S}" stroke-width="2" stroke-linecap="round" d="M18 47 Q30 51 42 47"/>
+  <rect x="13" y="53" width="34" height="3" rx="1.5" fill="${S}"/>
+</svg>`;
+ 
+const wheelSVG = `<svg viewBox="0 0 60 60" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="30" cy="30" r="26" fill="none" stroke="${P}" stroke-width="4"/>
+  <circle cx="30" cy="30" r="4" fill="${P}"/>
+  <line x1="30" y1="26" x2="30" y2="11" stroke="${S}" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="30" y1="34" x2="30" y2="49" stroke="${S}" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="26" y1="28" x2="13" y2="21" stroke="${S}" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="34" y1="32" x2="47" y2="39" stroke="${S}" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="34" y1="28" x2="47" y2="21" stroke="${S}" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="26" y1="32" x2="13" y2="39" stroke="${S}" stroke-width="1.5" stroke-linecap="round"/>
+  <circle cx="30" cy="4" r="2.5" fill="${S}"/>
+  <circle cx="30" cy="56" r="2.5" fill="${S}"/>
+  <circle cx="4" cy="21" r="2.5" fill="${S}"/>
+  <circle cx="56" cy="39" r="2.5" fill="${S}"/>
+  <circle cx="56" cy="21" r="2.5" fill="${S}"/>
+  <circle cx="4" cy="39" r="2.5" fill="${S}"/>
+</svg>`;
+ 
+const crankSVG = `<svg viewBox="0 0 60 60" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="30" cy="30" r="20" fill="none" stroke="${P}" stroke-width="4"/>
+  <circle cx="30" cy="30" r="20" fill="none" stroke="${S}" stroke-width="2" stroke-dasharray="4 3.2"/>
+  <circle cx="30" cy="30" r="8" fill="none" stroke="${P}" stroke-width="2.5"/>
+  <circle cx="30" cy="30" r="4" fill="${P}"/>
+  <rect x="28" y="28" width="8" height="24" rx="3" fill="${P}" transform="rotate(30 32 30)"/>
+  <rect x="42" y="46" width="14" height="6" rx="2" fill="${S}" transform="rotate(30 49 49)"/>
+</svg>`;
+ 
+const frameSVG = `<svg viewBox="0 0 60 60" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+  <rect x="6" y="8" width="7" height="18" rx="2" fill="${P}"/>
+  <rect x="12" y="10" width="30" height="5" rx="2" fill="${S}"/>
+  <line x1="13" y1="22" x2="42" y2="48" stroke="${P}" stroke-width="5" stroke-linecap="round"/>
+  <rect x="38" y="14" width="5" height="35" rx="2" fill="${S}"/>
+  <line x1="41" y1="16" x2="50" y2="48" stroke="${S}" stroke-width="3" stroke-linecap="round"/>
+  <line x1="41" y1="48" x2="50" y2="48" stroke="${S}" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="41" cy="48" r="5" fill="${P}"/>
+  <circle cx="50" cy="48" r="4" fill="${S}" stroke="${P}" stroke-width="1.5"/>
+  <circle cx="9" cy="26" r="4" fill="${S}" stroke="${P}" stroke-width="1.5"/>
+</svg>`;
+ 
+const handlebarSVG = `<svg viewBox="0 0 60 60" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+  <path d="M6 24 Q6 36 14 38" fill="none" stroke="${P}" stroke-width="5" stroke-linecap="round"/>
+  <path d="M54 24 Q54 36 46 38" fill="none" stroke="${P}" stroke-width="5" stroke-linecap="round"/>
+  <rect x="6" y="21" width="48" height="6" rx="3" fill="${P}"/>
+  <rect x="24" y="18" width="12" height="12" rx="3" fill="${S}"/>
+  <circle cx="30" cy="24" r="3" fill="${BG}" stroke="${P}" stroke-width="1.5"/>
+  <rect x="4" y="21" width="8" height="6" rx="2" fill="${S}"/>
+  <rect x="48" y="21" width="8" height="6" rx="2" fill="${S}"/>
+</svg>`;
+ 
+const saddleSVG = `<svg viewBox="0 0 60 60" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+  <rect x="24" y="38" width="12" height="18" rx="2" fill="${P}"/>
+  <rect x="26" y="36" width="8" height="4" rx="1" fill="${S}"/>
+  <path d="M10 28 Q10 20 30 20 Q50 20 50 28 Q50 34 30 36 Q10 34 10 28Z" fill="${P}"/>
+  <path d="M14 28 Q14 23 30 23 Q46 23 46 28 Q46 32 30 33 Q14 32 14 28Z" fill="${S}"/>
+  <rect x="27" y="6" width="6" height="16" rx="2" fill="${S}"/>
+  <rect x="25" y="18" width="10" height="4" rx="1" fill="${P}"/>
+</svg>`;
+ 
+const pedalSVG = `<svg viewBox="0 0 60 60" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+  <rect x="8" y="26" width="44" height="10" rx="3" fill="${P}"/>
+  <rect x="10" y="28" width="40" height="6" rx="2" fill="${S}"/>
+  <rect x="14" y="20" width="8" height="6" rx="1.5" fill="${P}"/>
+  <rect x="38" y="20" width="8" height="6" rx="1.5" fill="${P}"/>
+  <rect x="14" y="36" width="8" height="6" rx="1.5" fill="${P}"/>
+  <rect x="38" y="36" width="8" height="6" rx="1.5" fill="${P}"/>
+  <rect x="27" y="10" width="6" height="16" rx="2" fill="${S}"/>
+  <circle cx="30" cy="9" r="3" fill="${P}"/>
+</svg>`;
+ 
+const brakesSVG = `<svg viewBox="0 0 60 60" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="30" cy="30" r="26" fill="none" stroke="${P}" stroke-width="3.5"/>
+  <circle cx="30" cy="30" r="10" fill="none" stroke="${P}" stroke-width="2.5"/>
+  <line x1="30" y1="20" x2="30" y2="7" stroke="${P}" stroke-width="5" stroke-linecap="round"/>
+  <line x1="39.6" y1="25" x2="51.4" y2="18.2" stroke="${P}" stroke-width="5" stroke-linecap="round"/>
+  <line x1="39.6" y1="35" x2="51.4" y2="41.8" stroke="${P}" stroke-width="5" stroke-linecap="round"/>
+  <line x1="30" y1="40" x2="30" y2="53" stroke="${P}" stroke-width="5" stroke-linecap="round"/>
+  <line x1="20.4" y1="35" x2="8.6" y2="41.8" stroke="${P}" stroke-width="5" stroke-linecap="round"/>
+  <line x1="20.4" y1="25" x2="8.6" y2="18.2" stroke="${P}" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="30" cy="30" r="5" fill="${BG}" stroke="${P}" stroke-width="2"/>
+  <rect x="38" y="6" width="14" height="9" rx="2" fill="${S}"/>
+  <rect x="40" y="8" width="10" height="5" rx="1" fill="${BG}" opacity="0.5"/>
+</svg>`;
+ 
+const hubsSVG = `<svg viewBox="0 0 60 60" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+  <rect x="4" y="27" width="52" height="6" rx="3" fill="${S}"/>
+  <rect x="16" y="18" width="28" height="24" rx="5" fill="${P}"/>
+  <rect x="11" y="21" width="9" height="18" rx="3" fill="${S}"/>
+  <rect x="40" y="21" width="9" height="18" rx="3" fill="${S}"/>
+  <rect x="16" y="29" width="28" height="2" rx="1" fill="${S}" opacity="0.5"/>
+  <circle cx="13" cy="25" r="1.2" fill="${BG}"/>
+  <circle cx="19" cy="25" r="1.2" fill="${BG}"/>
+  <circle cx="13" cy="35" r="1.2" fill="${BG}"/>
+  <circle cx="19" cy="35" r="1.2" fill="${BG}"/>
+  <circle cx="41" cy="25" r="1.2" fill="${BG}"/>
+  <circle cx="47" cy="25" r="1.2" fill="${BG}"/>
+  <circle cx="41" cy="35" r="1.2" fill="${BG}"/>
+  <circle cx="47" cy="35" r="1.2" fill="${BG}"/>
+  <rect x="2" y="25" width="7" height="10" rx="2" fill="${P}"/>
+  <rect x="51" y="25" width="7" height="10" rx="2" fill="${P}"/>
+</svg>`;
+ 
+const chainSVG = `<svg viewBox="0 0 60 60" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+  <rect x="4" y="20" width="12" height="8" rx="4" fill="none" stroke="${P}" stroke-width="2.5"/>
+  <rect x="18" y="20" width="12" height="8" rx="4" fill="none" stroke="${S}" stroke-width="2.5" transform="rotate(90 24 24)"/>
+  <rect x="26" y="20" width="12" height="8" rx="4" fill="none" stroke="${P}" stroke-width="2.5"/>
+  <rect x="40" y="20" width="12" height="8" rx="4" fill="none" stroke="${S}" stroke-width="2.5" transform="rotate(90 46 24)"/>
+  <rect x="4" y="32" width="12" height="8" rx="4" fill="none" stroke="${S}" stroke-width="2.5" transform="rotate(90 10 36)"/>
+  <rect x="18" y="32" width="12" height="8" rx="4" fill="none" stroke="${P}" stroke-width="2.5"/>
+  <rect x="32" y="32" width="12" height="8" rx="4" fill="none" stroke="${S}" stroke-width="2.5" transform="rotate(90 38 36)"/>
+  <rect x="44" y="32" width="12" height="8" rx="4" fill="none" stroke="${P}" stroke-width="2.5"/>
+</svg>`;
+ 
+const cassetteSVG = `<svg viewBox="0 0 60 60" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="30" cy="30" r="26" fill="none" stroke="${P}" stroke-width="5"/>
+  <circle cx="30" cy="30" r="26" fill="none" stroke="${S}" stroke-width="2" stroke-dasharray="4 3.5"/>
+  <circle cx="30" cy="30" r="18" fill="none" stroke="${P}" stroke-width="4"/>
+  <circle cx="30" cy="30" r="18" fill="none" stroke="${S}" stroke-width="1.5" stroke-dasharray="3.5 3.2"/>
+  <circle cx="30" cy="30" r="11" fill="none" stroke="${P}" stroke-width="3.5"/>
+  <circle cx="30" cy="30" r="11" fill="none" stroke="${S}" stroke-width="1.5" stroke-dasharray="3 3"/>
+  <circle cx="30" cy="30" r="5" fill="${P}"/>
+  <circle cx="30" cy="30" r="3" fill="${BG}" stroke="${S}" stroke-width="1"/>
+</svg>`;
+ 
+const accessoriesSVG = `<svg viewBox="0 0 60 60" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+  <path d="M22 28 Q22 16 30 16 Q38 16 38 28 Z" fill="${P}"/>
+  <rect x="20" y="27" width="20" height="4" rx="2" fill="${S}"/>
+  <circle cx="30" cy="33" r="3" fill="${P}"/>
+  <rect x="40" y="20" width="10" height="22" rx="3" fill="${S}"/>
+  <rect x="42" y="16" width="6" height="6" rx="2" fill="${P}"/>
+  <rect x="43" y="25" width="4" height="2" rx="1" fill="${BG}" opacity="0.5"/>
+  <rect x="8" y="22" width="12" height="8" rx="3" fill="${S}"/>
+  <path d="M20 24 L28 20 L28 30 L20 26 Z" fill="${P}"/>
+</svg>`;
+
+
+const tyreSVG = `<svg viewBox="0 0 60 60" width="32" height="32"><circle cx="30" cy="30" r="25" fill="none" stroke="${P}" stroke-width="6"/><circle cx="30" cy="30" r="25" fill="none" stroke="${S}" stroke-width="2" stroke-dasharray="4 2"/><circle cx="30" cy="30" r="18" fill="none" stroke="#ddd" stroke-width="1"/></svg>`;
+
+
+const finderData = {
+  // Parts with their matched icons
+  partsWithIcons: [
+    { name: "Gears", icon: gearsSVG },
+    { name: "Stem", icon: stemSVG },
+    { name: "Fork", icon: forkSVG },
+    { name: "Wheel", icon: wheelSVG },
+    { name: "Crank", icon: crankSVG },
+    { name: "Frame", icon: frameSVG },
+    { name: "Handle Bar", icon: handlebarSVG },
+    { name: "Seat Post & Saddle", icon: saddleSVG },
+    { name: "Pedals & Grips", icon: pedalSVG },
+    { name: "Brakes", icon: brakesSVG },
+    { name: "Hubs", icon: hubsSVG },
+    { name: "Chain", icon: chainSVG },
+    { name: "Cassette", icon: cassetteSVG },
+    { name: "Tyres & Tubes", icon: tyreSVG },
+    { name: "Accessories", icon: accessoriesSVG }
+  ],
+  
+  // Keep the flat list of budgets
+  budgets: [500, 1000, 2000, 3000, 5000, 10000],
+  
+  // All the processed product data
+  products: {
+
+
+"Tyres & Tubes-500": [
+      { name: "Butyl Moulded Tube Schrader Valve", url: "https://omobikes.com/products/biycle-tube-spare-part-with-schrader-valve" },
+      { name: "Ralson 20 x 1.95 Kids Cycle Tyre", url: "https://omobikes.com/products/ralson-20x1-95-kids-cycle-tyre" },
+      { name: "Ralson Ecoracer Butyl Rubber 48mm", url: "https://omobikes.com/products/ralson-ecoracer-700x23-28c-bicycle-tube-48mm-presta-valve-butyl-rubber" },
+      { name: "Ralson 700 x 35-45c Butyl, Long valve", url: "https://omobikes.com/products/ralson-700x35-45c-bicycle-tube-butyl-rubber-av-long-valve-schrader" }
+    ],
+    "Tyres & Tubes-1000": [
+      { name: "Ralson tyre 29 x 2.1 Nylon MTB", url: "https://omobikes.com/products/tire-ralson-29-2-1-nylon-mtb-1pc" },
+      { name: "Ralson tyre 29 x 2.4 Himalayan Trail MTB", url: "https://omobikes.com/products/ralson-29x2-4-himalayan-trail-mtb-tire" },
+      { name: "Ralson tyre 29 x 2.4 Micro Octave MTB", url: "https://omobikes.com/products/ralson-29x2-4-micro-octave-mtb-tire" },
+      { name: "Ralson tyre 29 x 2.1 Nylon Skin wall MTB", url: "https://omobikes.com/products/ralson-29x2-1-tire-mtb-nylon-skin-wall" },
+      { name: "Ralson tyre 27.5 x 2.1 Octave MTB", url: "https://omobikes.com/products/ralson-27-5x2-1-octave-mtb-tire" },
+      { name: "Ralson tyre 27.5 x 2.1 Expolrer MTB", url: "https://omobikes.com/products/ralson-27-5x2-1-explorer-marco-mtb-tire" },
+      { name: "Ralson tyre 700 x 35 Nylon Hybrid", url: "https://omobikes.com/products/tyre-700-35-ralson-nylon-1pc" },
+      { name: "Ralson tyre 700 x 25 Nylon Hybrid", url: "https://omobikes.com/products/bicycle-tyre-700x25c-nylon" },
+      { name: "Ralson tyre 26 x 2.4 Nylon Hybrid", url: "https://omobikes.com/products/bicycle-tire-26-29-inch-and-700c-spare-part" },
+      { name: "Ralson Semi Fat Tyre 26 x 3 Nylon", url: "https://omobikes.com/products/bicycle-spare-part-semi-fat-tyre-26-3-inch" },
+      { name: "Ralson tyre 26 x 2.1 Himalayan Trail MTB", url: "https://omobikes.com/products/ralson-26x2-1-himalayan-trail-mtb-tire" },
+      { name: "Ralson Tyre 27.5 T", url: "https://omobikes.com/products/tyre-27-5-ralson-1pc" },
+      { name: "Ralson Tyre 700 x 25 c Road Bike", url: "https://omobikes.com/products/ralson-700x25c-road-bike-tire" },
+      { name: "Ralson Tyre 700 x 23 c Road Bike", url: "https://omobikes.com/products/ralson-700x23c-road-bike-tire" },
+      { name: "Hartex 29 x 2.1 Extra Action MTB", url: "https://omobikes.com/products/hartex-29x2-1-extra-action-mtb-tire" },
+      { name: "Hartex 700 x 37 Urban Ride Hybrid", url: "https://omobikes.com/products/hartex-700x37-urban-ride-hybrid-bicycle-tire" },
+      { name: "Ralson 24 x 2.1 MTB Gravel Tyre", url: "https://omobikes.com/products/ralson-24x2-10-mtb-gravel-tyre" },
+      { name: "Ralson 24 x 1.95 Hybrid City CycleTyre", url: "https://omobikes.com/products/ralson-24x1-95-hybrid-city-cycle-tyre" },
+      { name: "Ralson 20 x 2.125 MTB Cycle Tyre", url: "https://omobikes.com/products/ralson-20x2-125-mtb-cycle-tyre" },
+      { name: "Ralson 16 x 2.4 Kids Cycle Tyre", url: "https://omobikes.com/products/ralson-16x2-4-kids-bicycle-tyre" },
+      { name: "Ralson 16 x 2.125 Kids Cycle Tyre", url: "https://omobikes.com/products/ralson-16x2-125-kids-cycle-tyre" },
+      { name: "Ralson 16 x 1.75 Kids Cycle Tyre", url: "https://omobikes.com/products/ralson-16x1-75-kids-bicycle-tyre" },
+      { name: "Ralson 24 x 2.125 MTB Gravel Tyre", url: "https://omobikes.com/products/ralson-24x2-125-mtb-gravel-tyre" },
+      { name: "Ralson 700 x 42c Hybrid Gravel Touring", url: "https://omobikes.com/products/ralson-700x42c-tyre-hybrid-gravel-touring-bike" },
+      { name: "Ralson 26 x 1.95 Acer Golden Hybrid", url: "https://omobikes.com/products/ralson-26x1-95-acer-golden-26inch-hybrid-cycle-tyre" },
+      { name: "Ralson 26 x 2.125 MTB Gravel Tyre", url: "https://omobikes.com/products/ralson-26x2-125-mtb-gravel-tyre" }
+    ],
+    "Tyres & Tubes-2000": [
+      { name: "Ralson Foldable Tyre 700 x 35 Nylon", url: "https://omobikes.com/products/tyre-700-35-ralson-nylon-60tpi-foldable-2pc" },
+      { name: "Kenda 700 x 38 Glacier K180 Hybrid", url: "https://omobikes.com/products/kenda-700x38-glacier-k180-hybrid-cycle-tire" },
+      { name: "Kenda 700 x 40c Hybrid Cycle Tyre", url: "https://omobikes.com/products/kenda-700x40c-hybrid-cycle-tire" },
+      { name: "Ralson Fat Bike 24 x 3.0 MTB Tyre", url: "https://omobikes.com/products/ralson-24x3-0-fat-bike-tyre-24-mtb-wide-tyre" }
+    ],
+
+
+"Stem-500": [
+      { name: "Alloy Stem 80 mm Extension Threadless", url: "https://omobikes.com/products/bicycle-stem-alloy-threadless-fork" },
+      { name: "Quill Stem for Threaded Fork", url: "https://omobikes.com/products/bicycle-stem-for-threaded-fork" },
+      { name: "Alloy Stem 40 mm extension Threadless", url: "https://omobikes.com/products/bicycle-stem-alloy-for-threadless-fork-40mm" },
+      { name: "Alloy Stem 40 mm RoadBike", url: "https://omobikes.com/products/40mm-alloy-stem-road-bike-25-4mm-clamp" }
+    ],
+    "Stem-2000": [
+      { name: "Alloy Adjustable Stem", url: "https://omobikes.com/products/bicycle-stem-adjustable-alloy" }
+    ],
+    "Handle Bar-500": [
+      { name: "Handlebar Steel Riser", url: "https://omobikes.com/products/riser-handle-bar-for-bicycle-spare-parts" },
+      { name: "Handlebar Flat", url: "https://omobikes.com/products/cycle-handlebar-flat-straight-for-mtb-hybrid" }
+    ],
+    "Handle Bar-1000": [
+      { name: "Handlebar Alloy Riser", url: "https://omobikes.com/products/bicycle-handle-bar-riser-type-alloy-for-city-hybrid-bikes-mtb" },
+      { name: "Handlebar Drop RoadBike", url: "https://omobikes.com/products/drop-handlebars-road-bike-31-8mm-alloy" },
+      { name: "Colored handle Bar Red/ Blue/ Yellow", url: "https://omobikes.com/products/colored-handlebar-red-blue-yellow-shifty-mtb-hybrid-stunt-cycle?variant=47624763277568" }
+    ],
+    "Handle Bar-2000": [
+      { name: "Handlebar Alloy Flat", url: "https://omobikes.com/products/bicycle-handle-bar-flat-type-alloy-for-city-hybrid-bikes-mtb" },
+      { name: "Triathlon Aero Handlebar with Armrest", url: "https://omobikes.com/products/triathlon-aero-handlebar-attachment-with-armrests-road-bike" },
+      { name: "Colored handle Bar Shifty Chameleon", url: "https://omobikes.com/products/colored-handlebar-red-blue-yellow-shifty-mtb-hybrid-stunt-cycle?variant=47624763375872" }
+    ],
+
+
+"Frame-5000": [
+      { name: "Bicycle Frame Alloy Multi Speed", url: "https://omobikes.com/products/bicycle-frame-mtb-geared-multi-speed?variant=44122252902656" },
+      { name: "Bicycle Frame Alloy Multi Speed Grey", url: "https://omobikes.com/products/bicycle-frame-alloy-multi-speed-grey-mtb-cycle-hybrid-cycle" },
+      { name: "Bicycle Frame Aluminium Alloy", url: "https://omobikes.com/products/bicycle-frame-single-piece" },
+      { name: "Bicycle Frame Alloy Multi Speed Black", url: "https://omobikes.com/products/bicycle-frame-aluminium-alloy-multi-speed-omobikes-model-ladakh-hampi-copy" },
+      { name: "Bicycle Frame Aluminium Alloy Black", url: "https://omobikes.com/products/alloy-bicycle-frame-hybrid-single-speed?variant=44110972715264" }
+    ],
+
+
+"Crank-500": [
+      { name: "Crankset for Single Speed Bicycle", url: "https://omobikes.com/products/bicycle-crank-set-spare-part" },
+      { name: "Crankset for 21 Gears", url: "https://omobikes.com/products/crankset-for-21-gears-24-27-gears-mtb-hybrid-bicycle" }
+    ],
+    "Crank-1000": [
+      { name: "Alloy Crankset Single Speed 36T", url: "https://omobikes.com/products/bicycle-crankset-alloy-single-speed-36t" }
+    ],
+    "Crank-2000": [
+      { name: "Prowheel Alloy Single speed Crank 42T", url: "https://omobikes.com/products/bicycle-crankset-prowheel-alloy-single-speed-geared" },
+      { name: "Prowheel Crankset for 21 Gears", url: "https://omobikes.com/products/prowheel-crankset-for-21-gears-24-27-gears-mtb-hybrid-cycle" },
+      { name: "Shimano Crankset FC-TY501", url: "https://omobikes.com/products/bicycle-shimano-crankset-fc-ty501-tourney-for-3x6-7-8-speed" },
+      { name: "Shimano Crankset Cues U4000-2", url: "https://omobikes.com/products/shimano-crankset-cues-fcu4000" },
+      { name: "SunRun Crank 34T", url: "https://omobikes.com/products/sunrun-crank-34t-narrow-wide" }
+    ],
+    "Crank-3000": [
+      { name: "Shimano Crankset Cues U4000-1", url: "https://omobikes.com/products/shimano-crankset-cues-fc-u4000-1" },
+      { name: "Shimano Crankset Essa U2000-1", url: "https://omobikes.com/products/shimano-crankset-essa-fc-u2000-1" }
+    ],
+    "Crank-5000": [
+      { name: "Shimano Crankset Alivio MT210-3", url: "https://omobikes.com/products/shimano-crankset-alivio-fc-mt210-3-pressfit" }
+    ],
+
+
+"Wheel-500": [
+      { name: "Bicycle Double wall Alloy Rim 26\"", url: "https://omobikes.com/products/bicycle-rim-26-inch-double-wall-alloy-single-piece" },
+      { name: "Quick Release Skewer Front/Rear", url: "https://omobikes.com/products/quick-release-skewer-front-rear-bicycle-wheel?variant=47518391271680" },
+      { name: "Bicycle Wheel Spokes", url: "https://omobikes.com/products/bicycle-wheel-spokes-20-24-26-27-5-29-inch-mtb-hybrid-road-bike" }
+    ],
+    "Wheel-1000": [
+      { name: "Bicyle Double wall Rim 27.5\"/29\"", url: "https://omobikes.com/products/bicycle-rim-double-wall-alloy-single-piece?variant=47218792104192" }
+    ],
+    "Wheel-2000": [
+      { name: "Front Wheel Steel Generic", url: "https://omobikes.com/products/bicycle-spare-parts-700c-rim-yellow-black?variant=47605464629504" },
+      { name: "Front Wheel Alloy Generic", url: "https://omobikes.com/products/bicycle-spare-parts-700c-rim-yellow-black?variant=47605464727808" },
+      { name: "Rear Single Speed Steel Wheel", url: "https://omobikes.com/products/bicycle-spare-parts-700c-rim-yellow-black?variant=47605464826112" },
+      { name: "Rear Wheel Gear Freewheel Steel", url: "https://omobikes.com/products/bicycle-spare-parts-700c-rim-yellow-black?variant=47605464924416" },
+      { name: "Front Alloy Wheel Steel Hub", url: "https://omobikes.com/products/biycle-alloy-wheel-26-inch-spare-part?variant=37607157858461" },
+      { name: "Front Alloy Wheel Alloy Hub", url: "https://omobikes.com/products/biycle-alloy-wheel-26-inch-spare-part?variant=37607157891229" },
+      { name: "Rear Alloy wheel Steel Hub", url: "https://omobikes.com/products/biycle-alloy-wheel-26-inch-spare-part?variant=45760699662592" },
+      { name: "Rear Alloy wheel Gear Freewheel Hub", url: "https://omobikes.com/products/biycle-alloy-wheel-26-inch-spare-part?variant=46990181925120" }
+    ],
+    "Wheel-3000": [
+      { name: "Rear Wheel Gear Cassette Alloy", url: "https://omobikes.com/products/bicycle-spare-parts-700c-rim-yellow-black?variant=47605465022720" },
+      { name: "Quando KT68 Front alloy wheel", url: "https://omobikes.com/products/bicycle-spare-parts-700c-rim-yellow-black?variant=47605465121024" },
+      { name: "Quando KT68 Rear alloy Gear Cassette", url: "https://omobikes.com/products/bicycle-spare-parts-700c-rim-yellow-black?variant=47605465219328" },
+      { name: "Rear Alloy Wheel Cassette Alloy Hub", url: "https://omobikes.com/products/biycle-alloy-wheel-26-inch-spare-part?variant=46990181957888" }
+    ],
+    "Wheel-5000": [
+      { name: "Shimano QB400 Rear Alloy Cassette", url: "https://omobikes.com/products/bicycle-spare-parts-700c-rim-yellow-black?variant=47605465317632" }
+    ],
+
+
+"Fork-500": [
+      { name: "Kenli Headset Threadless", url: "https://omobikes.com/products/kenli-headset-threadless" },
+      { name: "RD Universal Hanger Alloy", url: "https://omobikes.com/products/rear-derailleur-hanger-universal-alloy" }
+    ],
+    "Fork-1000": [
+      { name: "Rigid Fork Steel Threadless", url: "https://omobikes.com/products/rigid-fork-for-bicycle-threadless" }
+    ],
+    "Fork-2000": [
+      { name: "Suspension Lockout Preload Fork 50mm", url: "https://omobikes.com/products/threadless-lockout-with-preload-suspension-fork-for-bicycle" },
+      { name: "Suspension Fork 27.5 Disc brake", url: "https://omobikes.com/products/suspension-fork-27-5-disc-brake-threadless" },
+      { name: "Suspension Fork 29 Threadless", url: "https://omobikes.com/products/29-suspension-fork-threadless-mtb-cycle-shocker" },
+      { name: "Suspension Fork 27.5 Threadless", url: "https://omobikes.com/products/bicycle-suspension-fork-27-5-threadless" },
+      { name: "Suspension Fork 26 Threadless", url: "https://omobikes.com/products/suspension-fork-26-disc-brake-threadless" },
+      { name: "Kenli Headset B310 Sealed", url: "https://omobikes.com/products/kenli-headset-b310-sealed-bearing-threadless-semi-integrated-1-1-8" }
+    ],
+    "Fork-3000": [
+      { name: "Suspension Fork Double Crown 27.5\"", url: "https://omobikes.com/products/suspension-fork-27-5-double-crown-golden-stunt-mtb" },
+      { name: "Suspension Fork Double Crown 29\"", url: "https://omobikes.com/products/suspension-fork-29-double-crown-golden-stunt-mtb" }
+    ],
+    "Fork-5000": [
+      { name: "SR Suntour XCM", url: "https://omobikes.com/products/sr-suntour-xcm-hydraulic-lockout-suspension-fork" },
+      { name: "Zoom Masera 389A Lockout", url: "https://omobikes.com/products/zoom-389a-suspension-fork-with-lockout-preload-for-mtb-hybrid-bikes" },
+      { name: "Suspension Fork Remote Lockout 29 inch", url: "https://omobikes.com/products/suspension-fork-remote-lockout-29inch" }
+    ],
+    "Fork-10000": [
+      { name: "SR Suntour XCM Lockout", url: "https://omobikes.com/products/sr-suntour-xcm-hydraulic-lockout-suspension-fork" },
+      { name: "SR Suntour XCT Lockout", url: "https://omobikes.com/products/sr-suntour-xct-suspenion-fork-for-mtb-hybrid-bikes" },
+      { name: "SR Suntour XCE Lockout", url: "https://omobikes.com/products/sr-suntour-xce-suspension-fork" },
+      { name: "SR Suntour NEX Lockout", url: "https://omobikes.com/products/sr-suntour-nex-700c-suspension-fork" },
+      { name: "Golden Air Suspension Fork 26\"", url: "https://omobikes.com/products/26-golden-air-suspension-fork-adjustable-rebound-mtb-stunt-bike" }
+    ],
+
+
+"Accessories-500": [
+      { name: "Bicycle Key lock with long cable", url: "https://omobikes.com/products/bicycle-key-lock-strong-steel-coiling-cable-mounting-bracket" },
+      { name: "Bicycle Number lock", url: "https://omobikes.com/products/bicycle-number-lock-for-mtb-kids-and-hybrid-bike" },
+      { name: "Bottle Holder Alloy", url: "https://omobikes.com/products/bicycle-bottle-cage-alloy" },
+      { name: "Seat Cover Ortho Memory Foam", url: "https://omobikes.com/products/ortho-memory-foam-bicycle-seat-cover" },
+      { name: "Seat Cover Ultra Soft", url: "https://omobikes.com/products/ultrasoft-comfortable-gel-seat-cover-for-bicycle" },
+      { name: "Mudguard Set 2026", url: "https://omobikes.com/products/universal-mudguards-bicycle-accessories" },
+      { name: "Extra Premium Grips", url: "https://omobikes.com/products/extra-premium-cushioned-leatherette-grips" },
+      { name: "Cycle Thumb Bell", url: "https://omobikes.com/products/cycle-bell-thumb-bell" },
+      { name: "Bicycle Side Stand", url: "https://omobikes.com/products/bicycle-side-stand" },
+      { name: "Ergonomic Grip", url: "https://omobikes.com/products/ergonomic-grip-with-wrist-support-anti-slip-lock-on-handlebar-grip-black" },
+      { name: "Decathalon Triban Bottle Holder", url: "https://omobikes.com/products/decathlon-triban-cycle-bottle-holder-500" },
+      { name: "Shimano SB BH59 Insert Unit", url: "https://omobikes.com/products/shimano-sb-bh59-olive-insert-unit" },
+      { name: "Decathalon Cycling Saddle Bag", url: "https://omobikes.com/products/decathlon-cycling-saddle-bag-500ml" },
+      { name: "Decathalon Chain Lube", url: "https://omobikes.com/products/decathlon-all-weather-bike-chain-lube-100-ml" },
+      { name: "Mudguard Set 2025", url: "https://omobikes.com/products/mudguard-set-universal-bicycle-fender-2026" },
+      { name: "Cycling bag Backpack", url: "https://omobikes.com/products/cycling-bag-backpack-eco-friendly" },
+      { name: "Handlebar Rubber Grips", url: "https://omobikes.com/products/bicycle-handlebar-rubber-grips-anti-slip-comfort-grip" },
+      { name: "Bicycle Reflector Set", url: "https://omobikes.com/products/bicycle-reflector-set-front-rear-red-white-universal-safety-reflectors-for-mtb-hybrid-kids-cycles" }
+    ],
+    "Accessories-1000": [
+      { name: "Bicycle Helmet", url: "https://omobikes.com/products/cyclist-accessories-cycling-helmets" },
+      { name: "Squirt Chain Lube", url: "https://omobikes.com/products/squirt-chain-lube-all-weather" },
+      { name: "Looplube Chain Cleaner", url: "https://omobikes.com/products/looplube-chain-cleaner" },
+      { name: "Decathalon Helmet EXPL-50", url: "https://omobikes.com/products/decathlon-mountain-bike-helmet-expl-50-rockrider" }
+    ],
+    "Accessories-2000": [
+      { name: "Aluminium Alloy Carrier", url: "https://omobikes.com/products/aluminum-alloy-adjustable-bicycle-rear-rack-aluminium-bicycle-carrier" },
+      { name: "Cycling Jersey", url: "https://omobikes.com/products/cyclist-clothing-and-accessories-cycling-jerseys" },
+      { name: "Topeak Mini 6 Bicyle Multi Tool", url: "https://omobikes.com/products/topeak-mini-6-bicycle-multi-tool" }
+    ],
+    "Accessories-3000": [
+      { name: "Decathalon Helmet RoadR 500", url: "https://omobikes.com/products/decathlon-road-bike-helmet-roadr-500-neon-yellow-van-rysel" }
+    ],  
+
+
+"Cassette-500": [
+      { name: "Single Speed Freewheel 18 T", url: "https://omobikes.com/products/bicycle-single-speed-freewheel-18t" },
+      { name: "Sunrun Freewheel 7S", url: "https://omobikes.com/products/sunrun-7-speed-freewheel-for-7-21-gear-mtb-hybrid-cycles" },
+      { name: "Freewheel Spoke Protector Guard", url: "https://omobikes.com/products/bicycle-freewheel-spoke-protector-guard" }
+    ],
+    "Cassette-1000": [
+      { name: "Shimano Tourney TZ500 7S", url: "https://omobikes.com/products/shimano-freewheel-fw-tz500-for-7-21-gears" },
+      { name: "Shimano Cassette HG-200 7S", url: "https://omobikes.com/products/shimano-cassette-hg-200-7s" },
+      { name: "Shimano Cassette HG-31 8S", url: "https://omobikes.com/products/shimano-cassette-hg-31-8s" },
+      { name: "Shimano Cassette HG-200 8S", url: "https://omobikes.com/products/shimano-cassette-hg-200-8s" },
+      { name: "Shimano Tourney TZ500 6S", url: "https://omobikes.com/products/shimano-tourney-tz500-6-speed-freewheel" },
+      { name: "SunRace Cassette M55 8S", url: "https://omobikes.com/products/sunrace-m55-8-speed-cassette" }
+    ],
+    "Cassette-2000": [
+      { name: "Shimano Cassette HG-200 9S", url: "https://omobikes.com/products/shimano-cassette-hg-200-9s" },
+      { name: "Shimano Cassette LG-300 Cues 9S", url: "https://omobikes.com/products/shimano-cassette-lg-300-cues-9-speed" },
+      { name: "Shimano Cassette HG-400 8S", url: "https://omobikes.com/products/shimano-cassette-hg-400-8s" },
+      { name: "Shimano Cassette HG-400 9S", url: "https://omobikes.com/products/shimano-cassette-hg-400-9s" },
+      { name: "Shimano Cassette HG-50 8S", url: "https://omobikes.com/products/shimano-claris-hg50-8-speed-cassette" },
+      { name: "Shimano Acera HG41 8S", url: "https://omobikes.com/products/shimano-acera-hg41-8-speed-cassette" },
+      { name: "Shimano Alivio HG51 8S", url: "https://omobikes.com/products/shimano-alivio-hg51-8-speed-cassette" },
+      { name: "SunRace Cassette 8S", url: "https://omobikes.com/products/sunrace-8-speed-cassette" }
+    ],
+    "Cassette-3000": [
+      { name: "Shimano Cassette HG-500 10S", url: "https://omobikes.com/products/shimano-tiagra-hg500-10-speed-cassette" }
+    ],
+    "Cassette-5000": [
+      { name: "Shimano Gear Set 1S to 21S", url: "https://omobikes.com/products/shimano-gear-set-single-speed-to-21-speed" },
+      { name: "Shimano 105 R7000 11S", url: "https://omobikes.com/products/shimano-105-r7000-11-speed-cassette" },
+      { name: "Shimano Deore M4100 10S", url: "https://omobikes.com/products/shimano-deore-m4100-10-speed-cassette" },
+      { name: "Shimano Deore HG50 10S", url: "https://omobikes.com/products/shimano-deore-hg50-10-speed-cassette" }
+    ],
+    "Cassette-10000": [
+      { name: "Shimano Gear Set 24S Complete", url: "https://omobikes.com/products/shimano-24-gears-set-complete" },
+      { name: "Shimano Cues CS-LG400 11S", url: "https://omobikes.com/products/shimano-cues-cs-lg400-cassette-linkglide-11-speed" }
+    ],  
+
+
+
+
+    "Gears-1000": [
+      { name: "Shimano Shifter ST-EF500", url: "https://omobikes.com/products/shimano-shifter-st-ef500-altus-shift-brake-lever" },
+      { name: "Shimano Tourney RD-TY300", url: "https://omobikes.com/products/shimano-rear-derailleur-rd-ty-300" },
+      { name: "Shimano Tourney RD-TY500", url: "https://omobikes.com/products/shimano-rear-derailleur-rd-ty-500" }
+    ],
+    "Gears-2000": [
+      { name: "Shimano Altus M2010", url: "https://omobikes.com/products/shimano-shifter-m2010-altus-2-speed" }, 
+      { name: "Shimano Acera M3010", url: "https://omobikes.com/products/shimano-shifter-m3000-acera-2x9-speed" },
+      { name: "Shimano Gear Upgrade (7S to 21S)", url: "https://omobikes.com/products/bicycle-gear-upgrade-7-speed-to-21-speed" },
+      { name: "Shimano Alivio SL-M3100", url: "https://omobikes.com/products/shimano-shifter-m-3100-alivio-3-9speed" },
+      { name: "Shimano Cues SL-U4000", url: "https://omobikes.com/products/shimano-cues-sl-u4000-shifter-2-9-gears" },
+      { name: "Shimano Acera RD-M3020", url: "https://omobikes.com/products/rear-derailleur-shimano-rd-m3020-acera" }
+    ],
+    "Gears-3000": [
+      { name: "Shimano Cues SL-U6000", url: "https://omobikes.com/products/shimano-cues-sl-u6000-2-speed-mechanical-shifter-black" },
+      { name: "Shimano Alivio RD-T4000", url: "https://omobikes.com/products/rear-derailleur-shimano-t4000-alivio-9speed" }
+    ],
+    "Gears-5000": [
+      { name: "Shimano Gear Set (1S to 21S)", url: "https://omobikes.com/products/shimano-gear-set-single-speed-to-21-speed" },
+      { name: "Shimano Gear Set (1S to 7S)", url: "https://omobikes.com/products/7-speed-gears" },
+      { name: "Shimano 8 Gear Set Complete", url: "https://omobikes.com/products/shimano-8-gears-set-complete" },
+      { name: "Shimano Cues RD-U4000 (9 Speed)", url: "https://omobikes.com/products/shimano-cues-rear-derailleur-rd-u4000-9-speed" }
+    ],
+    "Gears-10000": [
+      { name: "Shimano 24 Gear Set Complete", url: "https://omobikes.com/products/shimano-24-gears-set-complete" }
+    ],
+    
+    "Stem-1000": [
+      { name: "60 mm Alloy Stem", url: "https://omobikes.com/products/60mm-alloy-stem-road-bike-31-8mm-clamp" }, 
+   
+      { name: "Kenli Headset", url: "https://omobikes.com/products/kenli-headset-threadless" }
+    ],
+    "Seat Post & Saddle-500": [
+      { name: "Soft Cushioned Seat", url: "https://omobikes.com/products/bicycle-saddle-seat-x100-bicycle-seat-spare-part" },
+      { name: "QR Seat Post Clamp", url: "https://omobikes.com/products/quick-release-seatpost-clamp-black" },
+      { name: "Alloy Seat Post", url: "https://omobikes.com/products/seat-post-alloy-300mm-with-adapter" },
+      { name: "Ortho Memory Seat Cover", url: "https://omobikes.com/products/ortho-memory-foam-bicycle-seat-cover" },
+      { name: "Seat Post QR Lever 60 mm", url: "https://omobikes.com/products/copy-of-seat-post-clamp-with-quick-release-for-bicycle" },
+      { name: "Steel Post 28.6 mm", url: "https://omobikes.com/products/seat-post-steel-28-6mm" },
+      { name: "Steel Post 25.4 mm", url: "https://omobikes.com/products/seat-post-steel-25-4-mm" },
+      { name: "Steel Post 27.2 mm", url: "https://omobikes.com/products/seat-post-steel-27-2mm" }
+    ],
+    "Seat Post & Saddle-1000": [
+      { name: "Alloy Post 28.6 mm", url: "https://omobikes.com/products/seat-post-alloy-28-6x300-mm" },
+      { name: "Aero Saddle with Cutout", url: "https://omobikes.com/products/comfortable-aero-bicycle-saddle-with-cut-out-mtb-hybrids" },
+      { name: "Saddle with Cutout", url: "https://omobikes.com/products/comfortable-bicycle-saddle-with-cut-out-mtb-hybrids" }
+    ],
+    "Chain-1000": [
+      { name: "KMC HV500 (7 Speed)", url: "https://omobikes.com/products/kmc-chain-hv500-7speed" },
+      { name: "Shimano HG40", url: "https://omobikes.com/products/shimano-chain-cn-hg40" },
+      { name: "Squirt Chain Lube", url: "https://omobikes.com/products/squirt-chain-lube-all-weather" },
+      { name: "Looplube Chain Cleaner", url: "https://omobikes.com/products/looplube-chain-cleaner" },
+      { name: "Decathalon Chain Lube", url: "https://omobikes.com/products/decathlon-all-weather-bike-chain-lube-100-ml" }
+    ],
+    "Chain-2000": [
+      { name: "KMC X9", url: "https://omobikes.com/products/chain-kmc-z9-x9" },
+      { name: "KMC Z9", url: "https://omobikes.com/products/kmc-z9-bicycle-chain-for-9-18-27-speed" },
+      { name: "Shimano HG54 (10 Speed)", url: "https://omobikes.com/products/shimano-cn-hg54-10-speed-chain" },
+      { name: "Shimano HG53 (9 Speed)", url: "https://omobikes.com/products/shimano-cn-hg53-9-speed-chain" },
+      { name: "Shimano HG71 (6/7/8 Speed)", url: "https://omobikes.com/products/shimano-cn-hg71-6-7-8-speed-chain" }
+    ],
+    "Chain-3000": [
+      { name: "Shimano HG601 (11 Speed)", url: "https://omobikes.com/products/shimano-cn-hg601-11-speed-chain" },
+      { name: "Shimano HG95 (10 Speed)", url: "https://omobikes.com/products/shimano-cn-hg95-10-speed-chain" },
+      { name: "KMC X10 (Gold)", url: "https://omobikes.com/products/kmc-x10-bicycle-chain-10-speed-ti-n-gold" },
+      { name: "KMC X11", url: "https://omobikes.com/products/kmc-x11-bicycle-chain-11-speed" }
+    ],
+    "Hubs-1000": [
+      { name: "Steel SB Hub (Pair)", url: "https://omobikes.com/products/bicycle-hub-steel-sealed-bearing-hub" },
+      { name: "Steel SB Hub (Pair) with QR", url: "https://omobikes.com/products/bicycle-hub-steel-hub-1" }
+    ],
+    "Hubs-3000": [
+      { name: "Shimano FH QB400 Rear Hub", url: "https://omobikes.com/products/shimano-fh-qb400-hm-rear-hub" },
+      { name: "Quando KT-K68 Alloy Hub (Pair)", url: "https://omobikes.com/products/bicycle-hub-quando-36h-hub-kt68" },
+      { name: "Buzzer Alloy SB Hub (Pair)", url: "https://omobikes.com/products/buzzer-alloy-bicycle-hub-sealed-bearing-for-cassette" }
+    ],
+    "Pedals & Grips-500": [
+      { name: "PVC Pedals", url: "https://omobikes.com/products/pedals-for-mtb-hybrid-plastic" },
+      { name: "Alloy Pedals", url: "https://omobikes.com/products/bicycle-pedals-spare-part" },
+      { name: "Wellgo LU-883DU Pedals", url: "https://omobikes.com/products/wellgo-lu-883du-platform-pedal" },
+      { name: "Wellgo LU-968 Pedals", url: "https://omobikes.com/products/wellgo-lu-968-platform-pedals" },
+      { name: "Cushioned grip", url: "https://omobikes.com/products/extra-premium-cushioned-leatherette-grips" },
+      { name: "Rubber grip", url: "https://omobikes.com/products/grips-rubber-for-bicycle-handlebar" },
+      { name: "Ergonomic grip", url: "https://omobikes.com/products/ergonomic-grip-with-wrist-support-anti-slip-lock-on-handlebar-grip-black" }
+    ],
+    "Pedals & Grips-1000": [
+      { name: "VP-536 Nylon Pedals", url: "https://omobikes.com/products/vp-components-vpe-536-nylon-pedals-for-mtb-hybrids-bicycles" },
+      { name: "Wellgo B-249DU Alloy Pedals", url: "https://omobikes.com/products/wellgo-b249du-alloy-pedals" },
+      { name: "Wellgo LU-205DU Platform Pedals", url: "https://omobikes.com/products/wellgo-lu-205du-platform-pedal" }
+    ],
+   "Brakes-500": [
+      { name: "V Brake Set", url: "https://omobikes.com/products/cycle-v-brakes-set" },
+      { name: "V Brake Pad", url: "https://omobikes.com/products/cycle-v-brake-pads" },
+      { name: "Alloy Sypo Brake Lever", url: "https://omobikes.com/products/sypo-brake-levers-alloy" },
+      { name: "Disc Brake Pads", url: "https://omobikes.com/products/bicycle-disc-brake-pads-set-2-pc" },
+      { name: "Mech Disc Brake Rotor", url: "https://omobikes.com/products/mechanical-disc-brake-rotor-160-mm-for-bicycle" },
+      { name: "Shimano BH59 Olive", url: "https://omobikes.com/products/shimano-sb-bh59-olive-insert-unit" },
+      { name: "Decathalon Disc Brake Pad", url: "https://omobikes.com/products/decathlon-disc-brake-pads-compatible-with-shimano-deore-tektro" },
+      { name: "Shimano Rubber Rim Brake Pad", url: "https://omobikes.com/products/shimano-deore-xt-m70t4-rubber-rim-brake-pads" }
+    ],
+    "Brakes-1000": [
+      { name: "Shimano Hyd Brake MT200", url: "https://omobikes.com/products/shimano-hydraulic-brakes-m200" },
+      { name: "Buzzer Mech Disc Brake", url: "https://omobikes.com/products/buzzer-mechanical-disc-brake-set-machine-with-rotor-copy" },
+      { name: "Logan Mech Disc Brake", url: "https://omobikes.com/products/logan-mechanical-disc-brake-set-machine-with-rotor" },
+      { name: "Jak7 Mech Disc Brake F160", url: "https://omobikes.com/products/disc-brakes-for-bicycles?variant=45106037162240" },
+      { name: "Shimano Resin Disc Brake Pad", url: "https://omobikes.com/products/shimano-b05s-rx-resin-disc-brake-pads" },
+      { name: "Shimano Hyd Mineral Oil", url: "https://omobikes.com/products/shimano-hydraulic-mineral-oil-brake-fluid" }
+    ],
+    "Brakes-2000": [
+      { name: "Logan Hyd Disc Brake", url: "https://omobikes.com/products/bicycle-hydraulic-brake-logan" },
+      { name: "Jak7 Mech Disc Brake", url: "https://omobikes.com/products/jak7-mechanical-disc-brake-set-machine-with-rotor" },
+      { name: "Clarks Mech Disc Brake CMD-24", url: "https://omobikes.com/products/clarks-cmd-25-mechanical-disc-brake-set-machine-with-rotor" },
+      { name: "Tektro Disc Rotor TR160-24", url: "https://omobikes.com/products/tektro-rotor" },
+      { name: "Shimano Mech Disc Brake BRM375", url: "https://omobikes.com/products/shimano-mechanical-disc-brake-br-m375-1-caliper" },
+      { name: "Shimano Mech Disc Brake TX805", url: "https://omobikes.com/products/shimano-br-tx-805-mechanical-disc-brake-for-mtb-hybrid-bikes" }
+    ],
+    "Brakes-3000": [
+      { name: "Tektro Hyd Disc Brake M275", url: "https://omobikes.com/products/tektro-hd-m275-hydraulic-disc-brake" }
+    ],
+    "Brakes-5000": [
+      { name: "Tektro Mech Disc Brake M280", url: "https://omobikes.com/products/tektro-mechanical-disc-brake-m280" }
+    ],
+    "Gears-500": [
+      { name: "Gear Shifter Inner Cable", url: "https://omobikes.com/products/bicycle-gear-shifter-inner-wire-cable" },
+      { name: "RD Guard", url: "https://omobikes.com/products/bicycle-rear-derailleur-guard-1-hole" }
+    ]
+
+
+  }
+};
+
+
+// A friendly color palette
+const colors = ["#FFDDC1", "#C2E9FB", "#D1FFD6", "#F3D1FF", "#FFF5D1", "#E2E2E2", "#FFC1C1", "#C1FFFB"];
+
+
+let userChoices = { part: null, budget: null };
+
+
+function init() {
+  const partsGrid = document.getElementById('parts-grid');
+  // MODIFIED: Read the icon definition during card creation
+  finderData.partsWithIcons.forEach((partObj, index) => {
+    const color = colors[index % colors.length];
+    partsGrid.innerHTML += `
+      <div class="card" style="background-color: ${color}" onclick="selectPart('${partObj.name}')">
+        <span class="card-icon">${partObj.icon}</span>
+        <h3>${partObj.name}</h3>
+      </div>`;
+  });
+
+
+  const budgetGrid = document.getElementById('budget-grid');
+  finderData.budgets.forEach((amount, index) => {
+    const color = colors[(index + 2) % colors.length]; // Offset color for variety
+    budgetGrid.innerHTML += `<div class="card" style="background-color: ${color}" onclick="selectBudget(${amount})"><h3>Below Rs ${amount}</h3></div>`;
+  });
+}
+
+
+function selectPart(partName) {
+  userChoices.part = partName;
+  showStep(2);
+}
+
+
+function selectBudget(budget) {
+  userChoices.budget = budget;
+  renderProducts();
+  showStep(3);
+}
+
+
+function renderProducts() {
+  const productGrid = document.getElementById('product-grid');
+  const step3Title = document.querySelector('#step-3 h2');
+  const key = `${userChoices.part}-${userChoices.budget}`;
+  const results = finderData.products[key] || [];
+
+
+  // Updates the heading with the specific budget selected
+  if (step3Title) {
+    step3Title.innerText = `Recommended Products for Rs ${userChoices.budget.toLocaleString()} Budget`;
+  }
+
+
+  if (results.length > 0) {
+    productGrid.innerHTML = results.map((p, index) => {
+      const color = colors[(index + 4) % colors.length];
+      return `<div class="card" style="background-color: ${color}" onclick="window.location.href='${p.url}'"><h3>${p.name}</h3><p>View Details</p></div>`;
+    }).join('');
+  } else {
+    // Logic for suggesting alternative budgets...
+    productGrid.innerHTML = `<div class="no-results"><p>No products found in this range for <strong>${userChoices.part}</strong>. Try Other Options.</p></div>`;
+  }
+}
+
+
+function showStep(stepNum) {
+  document.querySelectorAll('.finder-step').forEach(s => s.style.display = 'none');
+  const target = document.getElementById('step-' + stepNum);
+  target.style.display = stepNum === 0 ? 'flex' : 'block';
+}
+
+
+function goBack(stepNum) {
+  showStep(stepNum);
+}
+
+
+// Start on welcome page
+showStep(0);
+init();
+</script>
+
+
+
+
+
+
+
+</body>

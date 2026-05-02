@@ -1,0 +1,763 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8">  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&amp;family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+
+
+<style>
+
+
+ .cf-wrap{font-family:'DM Sans',sans-serif;background:#f0f7f0;border-radius:20px;overflow:hidden;color:#1a2e1a;width:100%;max-width:520px;margin:0 auto;}
+
+
+ .cf-hero{background:#e0f0e0;padding:28px 24px 20px;border-bottom:1px solid #c8e0c8;text-align:center;}
+
+
+ .cf-label{font-size:11px;letter-spacing:.22em;color:#3a7a3a;text-transform:uppercase;margin-bottom:7px;font-weight:600;}
+
+
+ .cf-title{font-family:'DM Serif Display',serif;font-size:30px;color:#1a2e1a;line-height:1.1;margin-bottom:6px;}
+
+
+ .cf-subtitle{font-size:13px;color:#5a7a5a;font-weight:400;}
+
+
+ .cf-progress-bar{display:flex;gap:5px;padding:14px 24px 0;}
+
+
+ .cf-pip{height:3px;flex:1;border-radius:3px;background:#c8dcc8;transition:background .4s;}
+
+
+ .cf-pip.done{background:#3a8a3a;}.cf-pip.active{background:#5ab05a;}
+
+
+ .cf-step-label{padding:5px 24px 0;font-size:11px;color:#7a9a7a;font-weight:500;}
+
+
+ .cf-body{padding:20px 24px 24px;}
+
+
+ .cf-question{font-family:'DM Serif Display',serif;font-size:18px;color:#1a2e1a;margin-bottom:4px;line-height:1.3;}
+
+
+ .cf-hint{font-size:12px;color:#7a9a7a;margin-bottom:14px;}
+
+
+ .cf-options{display:flex;flex-direction:column;gap:8px;}
+
+
+ .cf-opt{background:#fff;border:1.5px solid #c8e0c8;border-radius:11px;padding:11px 14px;cursor:pointer;text-align:left;transition:background .18s,border-color .18s,box-shadow .18s,transform .15s;display:flex;align-items:center;gap:10px;width:100%;}
+
+
+ .cf-opt:hover{background:#eaf6ea;border-color:#4a9a4a;transform:translateY(-2px);box-shadow:0 3px 12px rgba(60,140,60,.10);}
+
+
+ .cf-opt-icon{width:34px;height:34px;border-radius:50%;background:#e8f5e8;border:1.5px solid #b8d8b8;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;}
+
+
+ .cf-opt-text{flex:1;}
+
+
+ .cf-opt-main{font-size:13px;font-weight:600;color:#1a3a1a;display:block;line-height:1.3;}
+
+
+ .cf-opt-sub{font-size:11px;color:#7a9a7a;display:block;margin-top:1px;}
+
+
+ .cf-opt-arrow{width:24px;height:24px;border-radius:50%;background:#e0f0e0;border:1px solid #b8d8b8;display:flex;align-items:center;justify-content:center;color:#4a8a4a;font-size:15px;flex-shrink:0;transition:background .18s,color .18s;}
+
+
+ .cf-opt:hover .cf-opt-arrow{background:#3a8a3a;color:#fff;border-color:#3a8a3a;}
+
+
+ .cf-back{background:none;border:none;color:#7a9a7a;font-size:12px;cursor:pointer;margin-top:12px;padding:0;display:flex;align-items:center;gap:4px;font-family:'DM Sans',sans-serif;font-weight:500;transition:color .2s;}
+
+
+ .cf-back:hover{color:#2a6a2a;}
+
+
+ .cf-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 20px;text-align:center;}
+
+
+ .cf-loading-text{font-family:'DM Serif Display',serif;font-size:18px;color:#1a2e1a;margin-top:14px;margin-bottom:5px;}
+
+
+ .cf-loading-sub{font-size:12px;color:#7a9a7a;}
+
+
+ .spin-rear{animation:spinW .85s linear infinite;transform-origin:45px 95px;}
+
+
+ .spin-front{animation:spinW .85s linear infinite;transform-origin:193px 95px;}
+
+
+ @keyframes spinW{to{transform:rotate(360deg);}}
+
+
+ .cf-results-header{font-family:'DM Serif Display',serif;font-size:20px;color:#1a2e1a;margin-bottom:3px;}
+
+
+ .cf-results-sub{font-size:12px;color:#7a9a7a;margin-bottom:16px;}
+
+
+ .cf-card{background:#fff;border:1.5px solid #c8e0c8;border-radius:12px;padding:14px 16px;margin-bottom:8px;}
+
+
+ .cf-card:first-of-type{border-color:#3a8a3a;background:#f4fbf4;}
+
+
+ .cf-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px;}
+
+
+ .cf-card-name{font-size:14px;font-weight:600;color:#1a2e1a;line-height:1.3;}
+
+
+ .cf-badge{font-size:9px;letter-spacing:.1em;text-transform:uppercase;background:#d4f0d4;color:#2a6a2a;border:1px solid #a8d8a8;border-radius:5px;padding:2px 7px;white-space:nowrap;flex-shrink:0;font-weight:600;}
+
+
+ .cf-card-mid{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+
+
+ .cf-card-price{font-family:'DM Serif Display',serif;font-size:22px;color:#2a7a2a;}
+
+
+ .cf-view-btn{background:#3a8a3a;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .18s,transform .15s;text-decoration:none;display:inline-block;}
+
+
+ .cf-view-btn:hover{background:#2a6a2a;transform:translateY(-1px);}
+
+
+ .cf-stats{display:flex;gap:6px;flex-wrap:wrap;}
+
+
+ .cf-stat{background:#f0f7f0;border:1px solid #c8e0c8;border-radius:7px;padding:5px 10px;text-align:center;flex:1;min-width:60px;}
+
+
+ .cf-stat-label{font-size:9px;color:#7a9a7a;display:block;text-transform:uppercase;letter-spacing:.1em;margin-bottom:1px;}
+
+
+ .cf-stat-val{font-size:13px;font-weight:600;color:#2a6a2a;}
+
+
+ .cf-restart{margin-top:14px;background:none;border:1.5px solid #b8d8b8;color:#4a7a4a;border-radius:9px;padding:9px 18px;cursor:pointer;font-size:13px;font-family:'DM Sans',sans-serif;font-weight:500;transition:background .2s,color .2s,border-color .2s;width:100%;}
+
+
+ .cf-restart:hover{background:#e0f0e0;color:#1a4a1a;border-color:#4a8a4a;}
+
+
+ .cf-info{padding:12px 24px 18px;border-top:1px solid #d8ead8;}
+
+
+ .cf-info p{font-size:11px;color:#9ab49a;line-height:1.6;text-align:center;}
+
+
+ .slide-in{animation:slideIn .28s ease forwards;}
+
+
+ @keyframes slideIn{from{opacity:0;transform:translateX(14px);}to{opacity:1;transform:translateX(0);}}
+
+
+ .fade-in{animation:fadeIn .4s ease forwards;}
+
+
+ @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+</style>
+
+
+<div class="cf-wrap">
+
+
+ <div class="cf-hero">
+
+
+   <div class="cf-label">Bike Finder</div>
+
+
+   <div class="cf-title">Find your perfect ride</div>
+
+
+   <div class="cf-subtitle">4 quick questions — personalised for you</div>
+
+
+ </div>
+
+
+ <div class="cf-progress-bar" id="progressBar">
+
+
+   <div class="cf-pip active" id="pip1"></div>
+
+
+   <div class="cf-pip" id="pip2"></div>
+
+
+   <div class="cf-pip" id="pip3"></div>
+
+
+   <div class="cf-pip" id="pip4"></div>
+
+
+ </div>
+
+
+ <div class="cf-step-label" id="stepLabel">Step 1 of 4</div>
+
+
+ <div class="cf-body" id="cfBody"></div>
+
+
+ <div class="cf-info"><p>This bike finder helps you select the right bicycle based on terrain, ride distance, riding style, and budget. Recommendations are based on typical usage scenarios and product positioning. Actual performance may vary depending on rider height, posture, maintenance, and riding conditions. This tool is a guidance aid and not a sizing calculator. Always review full specifications before purchase. Contact our team if you need personalised assistance choosing the right bike</p></div>
+
+
+</div>
+<script>
+
+
+var steps=[
+
+
+ {q:"What's your terrain mix?",hint:"Think about your typical weekly rides",key:"terrain",opts:[
+
+
+   {val:"5050",icon:"&#9968;",main:"Mix of flat &amp; hills",sub:"Flat &lt;50%, hills &lt;50%"},
+
+
+   {val:"8020",icon:"&#128739;",main:"Mostly flat, some hills",sub:"Flat ~80%, hills ~20%"},
+
+
+   {val:"flat",icon:"&#127961;",main:"Almost entirely flat",sub:"Flat roads 95%+"}
+
+
+ ]},
+
+
+ {q:"How far do you typically ride?",hint:"Your most common ride length",key:"distance",opts:[
+
+
+   {val:"long",icon:"&#127758;",main:"Long distances",sub:"100 km+ rides ~20% of the time"},
+
+
+   {val:"medium",icon:"&#128205;",main:"Medium distances",sub:"40&ndash;100 km occasionally"},
+
+
+   {val:"short",icon:"&#127960;",main:"Short local rides",sub:"Mostly under 20 km"}
+
+
+ ]},
+
+
+ {q:"What's your riding style?",hint:"Speed thrills or a relaxed cruise?",key:"ride",opts:[
+
+
+   {val:"speed",icon:"&#9889;",main:"Speed focused",sub:"Lean geometry, performance build"},
+
+
+   {val:"comfort",icon:"&#9729;",main:"Comfort focused",sub:"Upright posture, smooth ride"}
+
+
+ ]},
+
+
+ {q:"What's your budget?",hint:"Pick the range that feels right",key:"budget",opts:[
+
+
+   {val:"15",icon:"&#8377;",main:"Around &#8377;15,000",sub:"Great value entry point"},
+
+
+   {val:"20",icon:"&#8377;",main:"Around &#8377;20,000",sub:"Best-seller sweet spot"},
+
+
+   {val:"30",icon:"&#8377;",main:"Under &#8377;30,000",sub:"Premium components"}
+
+
+ ]}
+
+
+];
+var speedMap={Zozila:1,Ladakh:2,Coorg:3,Hampi:4};
+
+
+var comfortMap={Zozila:4,Ladakh:3,Coorg:2,Hampi:1};
+
+
+var ratingScore={1:"8&#9733;",2:"8.5&#9733;",3:"9&#9733;",4:"9.5&#9733;"};
+
+
+ 
+
+
+/* ── product URLs — replace # with your actual Shopify product page URLs ── */
+
+
+var productURLs={
+
+
+ "Zozila Cues 18s":"https://omobikes.com/products/zozila-cues-18-gears-mtb?variant=47362855272704","Coorg Cues 18s":"https://omobikes.com/products/coorg-cues-18-gears-hybrid?variant=47362852684032","Ladakh Cues 18s":"https://omobikes.com/products/ladakh-cues-18-gears-hybrid?variant=47256664408320","Hampi Cues 18s":"https://omobikes.com/products/hampi-cues-18-gears?variant=47362856354048",
+
+
+ "Zozila Cues 9s":"https://omobikes.com/products/zozila-cues-18-gears-mtb?variant=46840454971648","Coorg Cues 9s":"https://omobikes.com/products/coorg-cues-18-gears-hybrid?variant=46840409882880","Ladakh Cues 9s":"https://omobikes.com/products/ladakh-cues-18-gears-hybrid?variant=46840358502656","Hampi Cues 9s":"https://omobikes.com/products/hampi-cues-18-gears?variant=46792823767296",
+
+
+ "Zozila Pro 27s":"https://omobikes.com/products/zojila-pro-3x9-shimano-gears-alloy-29t-mtb-tektro-brakes-zoom-suspension?variant=46920871674112","Coorg Pro 27s":"https://omobikes.com/products/coorg-pro-alloy-hybrid-700c?variant=46920870199552","Ladakh Pro 27s":"https://omobikes.com/products/ladakh-3x9-alloy-hybrid-tektro-brakes-zoom-suspension?variant=46920876065024","Hampi Pro 27s":"https://omobikes.com/products/hampi-pro-9-27-speed?variant=46920874000640",
+
+
+ "Zozila Pro 9s":"https://omobikes.com/products/zojila-pro-3x9-shimano-gears-alloy-29t-mtb-tektro-brakes-zoom-suspension?variant=44123948482816","Coorg Pro 9s":"https://omobikes.com/products/coorg-pro-alloy-hybrid-700c?variant=45782226010368","Ladakh Pro 9s":"https://omobikes.com/products/ladakh-3x9-alloy-hybrid-tektro-brakes-zoom-suspension?variant=44175191933184","Hampi Pro 9s":"https://omobikes.com/products/hampi-pro-9-27-speed?variant=44089184846080",
+
+
+ "Zozila Prime 24s":"https://omobikes.com/products/zozila-prime-alloy-29t-mtb-24-speed-zoom-suspension-shimano-gear?variant=46874772603136","Coorg Prime 24s":"https://omobikes.com/products/coorg-prime24-gear?variant=46874751140096","Ladakh Prime 24s":"https://omobikes.com/products/hybrid-bike-ladakh-prime-24s-shimano-gear?variant=46874762576128","Hampi Prime 24s":"https://omobikes.com/products/hampi-prime-8-24-gear?variant=46874779681024",
+
+
+ "Zozila Prime 8s":"https://omobikes.com/products/zozila-prime-alloy-29t-mtb-24-speed-zoom-suspension-shimano-gear","Coorg Prime 8s":"https://omobikes.com/products/coorg-prime24-gear?variant=46576882057472","Ladakh Prime 8s":"https://omobikes.com/products/hybrid-bike-ladakh-prime-24s-shimano-gear?variant=44175147041024","Hampi Prime 8s":"https://omobikes.com/products/hampi-prime-8-24-gear?variant=44125948379392",
+
+
+ "Zozila Ace 21s":"https://omobikes.com/products/zozila-ace-alloy-mtb-cycle-29t-21-speed-shimano-gear-lockout-suspension?variant=46874161774848","Coorg Ace 21s":"https://omobikes.com/products/alloy-frame-700c-hybrid-cycle-21-speed?variant=46874164265216","Ladakh Ace 21s":"https://omobikes.com/products/ladakh-ace-7-21-speed-shimano-gears?variant=46874160922880","Hampi Ace 21s":"https://omobikes.com/products/hampi-7-21-gear?variant=46874158498048",
+
+
+ "Zozila Ace 7s":"https://omobikes.com/products/zozila-ace-alloy-mtb-cycle-29t-21-speed-shimano-gear-lockout-suspension?variant=43895622467840","Coorg Ace 7s":"https://omobikes.com/products/alloy-frame-700c-hybrid-cycle-21-speed?variant=43510749069568","Ladakh Ace 7s":"https://omobikes.com/products/ladakh-ace-7-21-speed-shimano-gears?variant=43520225542400","Hampi Ace 7s":"https://omobikes.com/products/hampi-7-21-gear?variant=44026360692992",
+
+
+ "Zozila Lite 1s":"https://omobikes.com/products/zozila-lite-single-speed-29t-mtb-mountain-bike-with-disc-brake-suspension","Coorg Lite 1s":"https://omobikes.com/products/coorg-lite-single-speed-hybrid-bike","Ladakh Lite 1s":"https://omobikes.com/products/ladakh-lite-alloy-hybrid-cycle-29t-disc-brake","Hampi Lite 1s":"https://omobikes.com/products/hampi-700"
+
+
+};
+var products=[
+
+
+ {name:"Zozila Cues 18s",price:28505,terrain:"5050",distance:"long",variant:"Zozila",smooth:4},
+
+
+ {name:"Coorg Cues 18s",price:27832,terrain:"5050",distance:"long",variant:"Coorg",smooth:4},
+
+
+ {name:"Ladakh Cues 18s",price:27832,terrain:"5050",distance:"long",variant:"Ladakh",smooth:4},
+
+
+ {name:"Hampi Cues 18s",price:27469,terrain:"5050",distance:"long",variant:"Hampi",smooth:4},
+
+
+ {name:"Zozila Cues 9s",price:26140,terrain:"8020",distance:"medium",variant:"Zozila",smooth:4},
+
+
+ {name:"Coorg Cues 9s",price:25530,terrain:"8020",distance:"medium",variant:"Coorg",smooth:4},
+
+
+ {name:"Ladakh Cues 9s",price:25529,terrain:"8020",distance:"medium",variant:"Ladakh",smooth:4},
+
+
+ {name:"Hampi Cues 9s",price:25165,terrain:"8020",distance:"medium",variant:"Hampi",smooth:4},
+
+
+ {name:"Zozila Pro 27s",price:25821,terrain:"5050",distance:"long",variant:"Zozila",smooth:3},
+
+
+ {name:"Coorg Pro 27s",price:25149,terrain:"5050",distance:"long",variant:"Coorg",smooth:3},
+
+
+ {name:"Ladakh Pro 27s",price:25149,terrain:"5050",distance:"long",variant:"Ladakh",smooth:3},
+
+
+ {name:"Hampi Pro 27s",price:24785,terrain:"5050",distance:"long",variant:"Hampi",smooth:3},
+
+
+ {name:"Zozila Pro 9s",price:21820,terrain:"8020",distance:"medium",variant:"Zozila",smooth:3},
+
+
+ {name:"Coorg Pro 9s",price:21147,terrain:"8020",distance:"medium",variant:"Coorg",smooth:3},
+
+
+ {name:"Ladakh Pro 9s",price:21147,terrain:"8020",distance:"medium",variant:"Ladakh",smooth:3},
+
+
+ {name:"Hampi Pro 9s",price:20783,terrain:"8020",distance:"medium",variant:"Hampi",smooth:3},
+
+
+ {name:"Zozila Prime 24s",price:19450,terrain:"5050",distance:"long",variant:"Zozila",smooth:2},
+
+
+ {name:"Coorg Prime 24s",price:18778,terrain:"5050",distance:"long",variant:"Coorg",smooth:2},
+
+
+ {name:"Ladakh Prime 24s",price:18778,terrain:"5050",distance:"long",variant:"Ladakh",smooth:2},
+
+
+ {name:"Hampi Prime 24s",price:18414,terrain:"5050",distance:"long",variant:"Hampi",smooth:2},
+
+
+ {name:"Zozila Prime 8s",price:17341,terrain:"8020",distance:"medium",variant:"Zozila",smooth:2},
+
+
+ {name:"Coorg Prime 8s",price:16669,terrain:"8020",distance:"medium",variant:"Coorg",smooth:2},
+
+
+ {name:"Ladakh Prime 8s",price:16669,terrain:"8020",distance:"medium",variant:"Ladakh",smooth:2},
+
+
+ {name:"Hampi Prime 8s",price:16305,terrain:"8020",distance:"medium",variant:"Hampi",smooth:2},
+
+
+ {name:"Zozila Ace 21s",price:15738,terrain:"5050",distance:"long",variant:"Zozila",smooth:1},
+
+
+ {name:"Coorg Ace 21s",price:15065,terrain:"5050",distance:"long",variant:"Coorg",smooth:1},
+
+
+ {name:"Ladakh Ace 21s",price:15065,terrain:"5050",distance:"long",variant:"Ladakh",smooth:1},
+
+
+ {name:"Hampi Ace 21s",price:14701,terrain:"5050",distance:"long",variant:"Hampi",smooth:1},
+
+
+ {name:"Zozila Ace 7s",price:14320,terrain:"8020",distance:"medium",variant:"Zozila",smooth:1},
+
+
+ {name:"Coorg Ace 7s",price:13647,terrain:"8020",distance:"medium",variant:"Coorg",smooth:1},
+
+
+ {name:"Ladakh Ace 7s",price:13647,terrain:"8020",distance:"medium",variant:"Ladakh",smooth:1},
+
+
+ {name:"Hampi Ace 7s",price:13283,terrain:"8020",distance:"medium",variant:"Hampi",smooth:1},
+
+
+ {name:"Zozila Lite 1s",price:11880,terrain:"flat",distance:"short",variant:"Zozila",smooth:1},
+
+
+ {name:"Coorg Lite 1s",price:11207,terrain:"flat",distance:"short",variant:"Coorg",smooth:1},
+
+
+ {name:"Ladakh Lite 1s",price:11207,terrain:"flat",distance:"short",variant:"Ladakh",smooth:1},
+
+
+ {name:"Hampi Lite 1s",price:10843,terrain:"flat",distance:"short",variant:"Hampi",smooth:1}
+
+
+];
+
+
+var answers={},step=0;
+
+
+function updateProgress(){
+
+
+ for(var i=1;i<=4;i++){
+
+
+   var p=document.getElementById('pip'+i);
+
+
+   p.className='cf-pip';
+
+
+   if(i<step+1)p.classList.add('done');
+
+
+   else if(i===step+1)p.classList.add('active');
+
+
+ }
+
+
+ document.getElementById('stepLabel').textContent=step<4?'Step '+(step+1)+' of 4':'Your results';
+
+
+}
+
+
+function renderStep(){
+
+
+ var body=document.getElementById('cfBody');
+
+
+ if(step>=4){showLoading();return;}
+
+
+ var s=steps[step];
+
+
+ var html='<div class="slide-in"><div class="cf-question">'+s.q+'</div><div class="cf-hint">'+s.hint+'</div><div class="cf-options">';
+
+
+ s.opts.forEach(function(o){
+
+
+   html+='<button class="cf-opt" onclick="choose(\''+s.key+'\',\''+o.val+'\')">'
+
+
+     +'<div class="cf-opt-icon">'+o.icon+'</div>'
+
+
+     +'<div class="cf-opt-text"><span class="cf-opt-main">'+o.main+'</span><span class="cf-opt-sub">'+o.sub+'</span></div>'
+
+
+     +'<div class="cf-opt-arrow">&#8250;</div></button>';
+
+
+ });
+
+
+ html+='</div>';
+
+
+ if(step>0)html+='<button class="cf-back" onclick="goBack()">&#8592; Back</button>';
+
+
+ html+='</div>';
+ body.innerHTML=html;
+
+
+ updateProgress();
+}
+
+
+function choose(k,v){answers[k]=v;step++;renderStep();}
+
+
+function goBack(){step--;renderStep();}
+
+
+/* ── spinning bike for loading screen ── */
+function drawBike(c,W,H,cx1,cy1,cx2,cy2,wr,spinning){
+
+
+ var sk=c==='#1a1a1a'?'#666':c;
+
+
+ var drk=c==='#e02020'?'#a00000':'#333';
+
+
+ var bbx=cx1+(cx2-cx1)*0.50,bby=cy1,htx=cx1+(cx2-cx1)*0.83,hty=cy1-wr*0.68,stx=cx1+(cx2-cx1)*0.36,sty=cy1-wr*0.76;
+
+
+ function wheel(cx,cy,sc){
+
+
+   var spk='';
+
+
+   for(var a=0;a<8;a++){var ang=a*Math.PI/8,x1=Math.round(cx+wr*0.86*Math.cos(ang)),y1=Math.round(cy+wr*0.86*Math.sin(ang)),x2=Math.round(cx-wr*0.86*Math.cos(ang)),y2=Math.round(cy-wr*0.86*Math.sin(ang));spk+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+sk+'" stroke-width="1" opacity="0.55"/>';}
+
+
+   var g=sc?'<g class="'+sc+'">'+spk+'</g>':spk;
+
+
+   return g+'<circle cx="'+cx+'" cy="'+cy+'" r="'+wr+'" fill="none" stroke="'+c+'" stroke-width="5"/>'+'<circle cx="'+cx+'" cy="'+cy+'" r="'+Math.round(wr*0.77)+'" fill="none" stroke="'+c+'" stroke-width="0.8" stroke-dasharray="2 4" opacity="0.3"/>'+'<circle cx="'+cx+'" cy="'+cy+'" r="'+Math.round(wr*0.16)+'" fill="'+c+'"/>';
+
+
+ }
+
+
+ var s='<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto;">';
+
+
+ s+=wheel(cx1,cy1,spinning?'spin-rear':null);s+=wheel(cx2,cy2,spinning?'spin-front':null);
+
+
+ s+='<line x1="'+cx1+'" y1="'+cy1+'" x2="'+bbx+'" y2="'+bby+'" stroke="'+c+'" stroke-width="3.5" stroke-linecap="round"/>';
+
+
+ s+='<line x1="'+bbx+'" y1="'+bby+'" x2="'+stx+'" y2="'+sty+'" stroke="'+c+'" stroke-width="3.5" stroke-linecap="round"/>';
+
+
+ s+='<line x1="'+stx+'" y1="'+sty+'" x2="'+htx+'" y2="'+hty+'" stroke="'+c+'" stroke-width="3" stroke-linecap="round"/>';
+
+
+ s+='<line x1="'+htx+'" y1="'+hty+'" x2="'+bbx+'" y2="'+bby+'" stroke="'+c+'" stroke-width="3.5" stroke-linecap="round"/>';
+
+
+ s+='<line x1="'+stx+'" y1="'+sty+'" x2="'+cx1+'" y2="'+cy1+'" stroke="'+c+'" stroke-width="2.5" stroke-linecap="round"/>';
+
+
+ s+='<line x1="'+htx+'" y1="'+hty+'" x2="'+cx2+'" y2="'+cy2+'" stroke="'+c+'" stroke-width="3.5" stroke-linecap="round"/>';
+
+
+ var spx=stx-3,spy=sty-Math.round(wr*0.4);
+
+
+ s+='<line x1="'+stx+'" y1="'+sty+'" x2="'+spx+'" y2="'+spy+'" stroke="'+c+'" stroke-width="3" stroke-linecap="round"/>';
+
+
+ s+='<path d="M'+(spx-11)+' '+(spy+2)+' Q'+spx+' '+(spy-6)+' '+(spx+13)+' '+(spy+1)+'" fill="none" stroke="'+c+'" stroke-width="5" stroke-linecap="round"/>';
+
+
+ s+='<circle cx="'+stx+'" cy="'+sty+'" r="3" fill="'+c+'"/>';
+
+
+ s+='<line x1="'+htx+'" y1="'+hty+'" x2="'+(htx+2)+'" y2="'+(hty+11)+'" stroke="'+c+'" stroke-width="6" stroke-linecap="round"/>';
+
+
+ var smx=htx+9,smy=hty-8;
+
+
+ s+='<line x1="'+htx+'" y1="'+hty+'" x2="'+smx+'" y2="'+smy+'" stroke="'+c+'" stroke-width="3" stroke-linecap="round"/>';
+
+
+ s+='<path d="M'+(smx-6)+' '+smy+' Q'+(smx+2)+' '+(smy-6)+' '+(smx+9)+' '+smy+' Q'+(smx+13)+' '+(smy+5)+' '+(smx+9)+' '+(smy+9)+'" fill="none" stroke="'+c+'" stroke-width="4" stroke-linecap="round"/>';
+
+
+ s+='<line x1="'+(smx-6)+'" y1="'+smy+'" x2="'+(smx-9)+'" y2="'+(smy+7)+'" stroke="'+c+'" stroke-width="3" stroke-linecap="round"/>';
+
+
+ s+='<circle cx="'+bbx+'" cy="'+bby+'" r="'+Math.round(wr*0.38)+'" fill="none" stroke="'+drk+'" stroke-width="2"/>';
+
+
+ s+='<circle cx="'+bbx+'" cy="'+bby+'" r="'+Math.round(wr*0.20)+'" fill="'+c+'"/>';
+
+
+ s+='<circle cx="'+bbx+'" cy="'+bby+'" r="'+Math.round(wr*0.11)+'" fill="#fff" opacity="0.5"/>';
+
+
+ var crkx=Math.round(bbx+wr*0.42),crky=Math.round(bby+wr*0.22);
+
+
+ s+='<line x1="'+bbx+'" y1="'+bby+'" x2="'+crkx+'" y2="'+crky+'" stroke="'+drk+'" stroke-width="3" stroke-linecap="round"/>';
+
+
+ s+='<circle cx="'+crkx+'" cy="'+crky+'" r="'+Math.round(wr*0.12)+'" fill="'+drk+'"/>';
+
+
+ s+='</svg>';
+
+
+ return s;
+
+
+}
+
+
+ 
+
+
+function showLoading(){
+
+
+ updateProgress();
+
+
+ var b=drawBike('#e02020',238,130,45,95,193,95,32,true);
+
+
+ document.getElementById('cfBody').innerHTML='<div class="cf-loading slide-in">'+b+'<div class="cf-loading-text">Finding your perfect match\u2026</div><div class="cf-loading-sub">Analysing your riding profile</div></div>';
+
+
+ setTimeout(showResults,2500);
+
+
+}
+
+
+ 
+
+
+function showResults(){
+
+
+ updateProgress();
+
+
+ var target=20000,resultCount=5;
+
+
+ if(answers.budget==='15'){target=15000;resultCount=3;}
+
+
+ if(answers.budget==='20'){target=20000;resultCount=5;}
+
+
+ if(answers.budget==='30'){target=28000;resultCount=5;}
+
+
+ var scored=[];
+
+
+ products.forEach(function(p){
+
+
+   if(p.price>target+5000)return;
+
+
+   var score=0;
+
+
+   if(p.terrain===answers.terrain)score+=4;
+
+
+   if(p.distance===answers.distance)score+=4;
+
+
+   if(answers.ride==='speed')score+=speedMap[p.variant];
+
+
+   if(answers.ride==='comfort')score+=comfortMap[p.variant];
+
+
+   score+=Math.abs(p.price-target)<=3000?4:2;
+
+
+   score+=p.smooth*0.5;
+
+
+   scored.push(Object.assign({},p,{score:score}));
+
+
+ });
+
+
+ scored.sort(function(a,b){return b.score-a.score;});
+
+
+ 
+
+
+ var html='<div class="fade-in"><div class="cf-results-header">Best matches for you</div><div class="cf-results-sub">Ranked by fit to your riding profile</div>';
+
+
+ for(var i=0;i<Math.min(resultCount,scored.length);i++){
+
+
+   var p=scored[i];
+
+
+   var url=productURLs[p.name]||'#';
+
+
+   html+='<div class="cf-card">'
+
+
+     +'<div class="cf-card-top"><div class="cf-card-name">'+p.name+'</div>'+(i===0?'<div class="cf-badge">Best match</div>':'')+'</div>'
+
+
+     +'<div class="cf-card-mid">'
+
+
+     +'<div class="cf-card-price">&#8377;'+p.price.toLocaleString('en-IN')+'</div>'
+
+
+     +'<a class="cf-view-btn" href="'+url+'" target="_blank">View Bike &#8599;</a>'
+
+
+     +'</div>'
+
+
+     +'<div class="cf-stats">'
+
+
+     +'<div class="cf-stat"><span class="cf-stat-label">Speed</span><span class="cf-stat-val">'+ratingScore[speedMap[p.variant]]+'</span></div>'
+     +'<div class="cf-stat"><span class="cf-stat-label">Comfort</span><span class="cf-stat-val">'+ratingScore[comfortMap[p.variant]]+'</span></div>'
+     +'<div class="cf-stat"><span class="cf-stat-label">Smooth</span><span class="cf-stat-val">'+ratingScore[p.smooth]+'</span></div>'
+     +'</div></div>';
+ }
+ html+='<button class="cf-restart" onclick="restart()">&#8592; Start over</button></div>';
+ document.getElementById('cfBody').innerHTML=html;
+}
+ 
+function restart(){answers={};step=0;renderStep();}
+renderStep();
+</script>
+</body>  
+</html>
+
