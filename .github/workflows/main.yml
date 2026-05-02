@@ -1,0 +1,80 @@
+name: Build OmoBikes APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Download Gradle Wrapper JAR
+        run: |
+          mkdir -p gradle/wrapper
+          curl -sL "https://github.com/gradle/gradle/raw/v8.1.1/gradle/wrapper/gradle-wrapper.jar" \
+            -o gradle/wrapper/gradle-wrapper.jar
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Run Android Lint
+        run: ./gradlew lintDebug
+
+      - name: Upload Lint Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Lint-Report
+          path: app/build/reports/lint-results-debug.html
+
+      - name: Generate Keystore
+        run: |
+          keytool -genkey -v \
+            -keystore omobikes.jks \
+            -alias omobikes \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass omobikes2026 \
+            -keypass omobikes2026 \
+            -dname "CN=OmoBikes, OU=Mobile, O=OmoBikes, L=India, S=India, C=IN"
+
+      - name: Build Release AAB
+        run: ./gradlew bundleRelease
+
+      - name: Sign AAB
+        run: |
+          jarsigner -verbose \
+            -sigalg SHA256withRSA \
+            -digestalg SHA-256 \
+            -keystore omobikes.jks \
+            -storepass omobikes2026 \
+            -keypass omobikes2026 \
+            app/build/outputs/bundle/release/app-release.aab \
+            omobikes
+
+      - name: Upload AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: OmoBikes-release-aab
+          path: app/build/outputs/bundle/release/app-release.aab
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug
+
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: OmoBikes-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
