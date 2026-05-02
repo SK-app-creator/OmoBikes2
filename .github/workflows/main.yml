@@ -8,6 +8,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: OmoBikes-main
 
     steps:
       - name: Checkout code
@@ -26,10 +29,7 @@ jobs:
             -o gradle/wrapper/gradle-wrapper.jar
 
       - name: Make gradlew executable
-        run: |
-          ls -la
-          chmod +x gradlew || true
-          ls -la gradlew
+        run: chmod +x gradlew
 
       - name: Run Android Lint
         run: ./gradlew lintDebug
@@ -39,7 +39,7 @@ jobs:
         if: always()
         with:
           name: Lint-Report
-          path: app/build/reports/lint-results-debug.html
+          path: OmoBikes-main/app/build/reports/lint-results-debug.html
 
       - name: Generate Keystore
         run: |
@@ -71,7 +71,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: OmoBikes-release-aab
-          path: app/build/outputs/bundle/release/app-release.aab
+          path: OmoBikes-main/app/build/outputs/bundle/release/app-release.aab
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug
@@ -80,4 +80,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: OmoBikes-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: OmoBikes-main/app/build/outputs/apk/debug/app-debug.apk
