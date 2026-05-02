@@ -26,7 +26,10 @@ jobs:
             -o gradle/wrapper/gradle-wrapper.jar
 
       - name: Make gradlew executable
-        run: chmod +x gradlew
+        run: |
+          ls -la
+          chmod +x gradlew || true
+          ls -la gradlew
 
       - name: Run Android Lint
         run: ./gradlew lintDebug
