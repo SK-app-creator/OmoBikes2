@@ -1,0 +1,212 @@
+<div class="page-width">
+  <header class="section-header text-center">
+    <h1>{{ page.title }}</h1>
+  </header>
+
+  <style>
+    /* Styling for a clean, modern bike shop feel */
+    .hero-banner { background: #1b5e20; padding: 40px 20px; text-align: center; border-radius: 12px; margin-bottom: 30px; }
+    .hero-banner h2 { color: #fff; margin: 0; font-size: 24px; }
+    .hero-banner p { color: #a5d6a7; margin-top: 10px; }
+
+    .selection-panel { max-width: 900px; margin: 0 auto 40px; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid #e0e0e0; }
+    .selection-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px; }
+    @media (max-width: 600px) { .selection-grid { grid-template-columns: 1fr; } }
+    
+    .select-box label { display: block; font-weight: bold; margin-bottom: 8px; color: #1b5e20; font-size: 14px; text-transform: uppercase; }
+    .select-box select { width: 100%; padding: 12px; border: 2px solid #c8e6c9; border-radius: 8px; font-size: 15px; cursor: pointer; }
+    
+    .btn-compare { width: 100%; background: #1b5e20; color: #fff; padding: 15px; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; transition: background 0.3s; }
+    .btn-compare:hover { background: #2e7d32; }
+
+    /* Comparison Table Styling */
+    .comparison-container { display: none; max-width: 1100px; margin: 0 auto; overflow-x: auto; }
+    .comp-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    
+    .comp-header { background: #1b5e20; color: #fff; }
+    .comp-header th { padding: 20px; text-align: left; border-right: 1px solid rgba(255,255,255,0.1); }
+    .comp-header th:first-child { width: 25%; }
+    
+    .category-row { background: #e8f5e9; }
+    .category-row td { padding: 12px 20px; font-weight: bold; color: #1b5e20; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+    
+    .data-row td { padding: 15px 20px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333; border-right: 1px solid #f0f0f0; }
+    .spec-label { font-weight: 600; background: #fafafa; color: #666; }
+
+    .btn-reset { margin-top: 20px; background: transparent; border: 2px solid #1b5e20; color: #1b5e20; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+  </style>
+
+  <div class="hero-banner">
+    <h2>Find Your Perfect Ride</h2>
+    <p>Compare components, gears, and frames across our entire 2026 collection</p>
+  </div>
+
+  <div class="selection-panel" id="panelView">
+    <div class="selection-grid">
+      <div class="select-box">
+        <label>Select First Bicycle</label>
+        <select id="bikeA"><option value="">-- Choose a Model --</option></select>
+      </div>
+      <div class="select-box">
+        <label>Select Second Bicycle</label>
+        <select id="bikeB"><option value="">-- Choose a Model --</option></select>
+      </div>
+    </div>
+    <button class="btn-compare" onclick="runComparison()">Compare Specifications</button>
+    <p id="errorMsg" style="color: #c62828; display: none; margin-top: 15px; font-weight: bold; text-align: center;"></p>
+  </div>
+
+  <div class="comparison-container" id="resultsView">
+    <table class="comp-table">
+      <thead id="tableHead"></thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+    <button class="btn-reset" onclick="resetPage()">← Back to Selection</button>
+  </div>
+
+  <script>
+    // Full dataset from "Product Pricing Master 2026 - CYCLE SPECS 26.csv"
+    const bikeData = {
+      "Zozila Cues 18s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-SUS-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-27.5-29X2.1-RALSON", "RD": "RD-SHIMANO-CUES-U4000", "FD": "FD-SHIMANO-U4000", "Shifter R": "SHIFTER-R-9S-SHIMANO-U4000", "Shifter L": "SHIFTER-L-2S-SHIMANO-U4000", "Crank": "CRANK-SHIMANO-U4000-2S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-ALLOY-SEALED-QR", "Hub R": "HUB-REAR-ALLOY-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-PVC-BIGBEN", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-9S-LG500-SHIMANO", "FW/CS": "CS-9S-SHIMANO-LG300"},
+      "Coorg Cues 18s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-SUS-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-700X35-RALSON", "RD": "RD-SHIMANO-CUES-U4000", "FD": "FD-SHIMANO-U4000", "Shifter R": "SHIFTER-R-9S-SHIMANO-U4000", "Shifter L": "SHIFTER-L-2S-SHIMANO-U4000", "Crank": "CRANK-SHIMANO-U4000-2S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-ALLOY-SEALED-QR", "Hub R": "HUB-REAR-ALLOY-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-PVC-BIGBEN", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-9S-LG500-SHIMANO", "FW/CS": "CS-9S-SHIMANO-LG300"},
+      "Hampi Cues 18s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-RIGID-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-700X35-RALSON", "RD": "RD-SHIMANO-CUES-U4000", "FD": "FD-SHIMANO-U4000", "Shifter R": "SHIFTER-R-9S-SHIMANO-U4000", "Shifter L": "SHIFTER-L-2S-SHIMANO-U4000", "Crank": "CRANK-SHIMANO-U4000-2S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-ALLOY-SEALED-QR", "Hub R": "HUB-REAR-ALLOY-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-PVC-BIGBEN", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-9S-LG500-SHIMANO", "FW/CS": "CS-9S-SHIMANO-LG300"},
+      "Ladakh Cues 18s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-SUS-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-700X35-RALSON", "RD": "RD-SHIMANO-CUES-U4000", "FD": "FD-SHIMANO-U4000", "Shifter R": "SHIFTER-R-9S-SHIMANO-U4000", "Shifter L": "SHIFTER-L-2S-SHIMANO-U4000", "Crank": "CRANK-SHIMANO-U4000-2S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-ALLOY-SEALED-QR", "Hub R": "HUB-REAR-ALLOY-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-PVC-BIGBEN", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-9S-LG500-SHIMANO", "FW/CS": "CS-9S-SHIMANO-LG300"},
+      "Zozila Cues 9s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-SUS-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-27.5-29X2.1-RALSON", "RD": "RD-SHIMANO-CUES-U4000", "FD": "N/A", "Shifter R": "SHIFTER-R-9S-SHIMANO-U4000", "Shifter L": "N/A", "Crank": "CRANK-SHIMANO-U4000-1S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-ALLOY-SEALED-QR", "Hub R": "HUB-REAR-ALLOY-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-PVC-BIGBEN", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-9S-LG500-SHIMANO", "FW/CS": "CS-9S-SHIMANO-LG300"},
+      "Coorg Cues 9s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-SUS-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-700X35-RALSON", "RD": "RD-SHIMANO-CUES-U4000", "FD": "N/A", "Shifter R": "SHIFTER-R-9S-SHIMANO-U4000", "Shifter L": "N/A", "Crank": "CRANK-SHIMANO-U4000-1S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-ALLOY-SEALED-QR", "Hub R": "HUB-REAR-ALLOY-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-PVC-BIGBEN", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-9S-LG500-SHIMANO", "FW/CS": "CS-9S-SHIMANO-LG300"},
+      "Hampi Cues 9s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-RIGID-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-700X35-RALSON", "RD": "RD-SHIMANO-CUES-U4000", "FD": "N/A", "Shifter R": "SHIFTER-R-9S-SHIMANO-U4000", "Shifter L": "N/A", "Crank": "CRANK-SHIMANO-U4000-1S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-ALLOY-SEALED-QR", "Hub R": "HUB-REAR-ALLOY-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-PVC-BIGBEN", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-9S-LG500-SHIMANO", "FW/CS": "CS-9S-SHIMANO-LG300"},
+      "Ladakh Cues 9s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-SUS-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-700X35-RALSON", "RD": "RD-SHIMANO-CUES-U4000", "FD": "N/A", "Shifter R": "SHIFTER-R-9S-SHIMANO-U4000", "Shifter L": "N/A", "Crank": "CRANK-SHIMANO-U4000-1S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-ALLOY-SEALED-QR", "Hub R": "HUB-REAR-ALLOY-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-PVC-BIGBEN", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-9S-LG500-SHIMANO", "FW/CS": "CS-9S-SHIMANO-LG300"},
+      "Zozilla Pro 27s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-SUS-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-27.5-29X2.1-RALSON", "RD": "RD-SHIMANO-ALIVIO-M3100", "FD": "FD-SHIMANO-ALTUS-M370", "Shifter R": "SHIFTER-R-9S-SHIMANO-ALTUS-M370", "Shifter L": "SHIFTER-L-3S-SHIMANO-ALTUS-M370", "Crank": "CRANK-PROWHEEL-ALLOY-3S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-ALLOY-SEALED-QR", "Hub R": "HUB-REAR-ALLOY-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-ALLOY-FULL-PROWHEEL", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-9S-PYC-NARROW", "FW/CS": "CS-9S-SHIMANO-HG200"},
+      "Coorg Pro 27s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-SUS-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-700X35-RALSON", "RD": "RD-SHIMANO-ALIVIO-M3100", "FD": "FD-SHIMANO-ALTUS-M370", "Shifter R": "SHIFTER-R-9S-SHIMANO-ALTUS-M370", "Shifter L": "SHIFTER-L-3S-SHIMANO-ALTUS-M370", "Crank": "CRANK-PROWHEEL-ALLOY-3S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-ALLOY-SEALED-QR", "Hub R": "HUB-REAR-ALLOY-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-ALLOY-FULL-PROWHEEL", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-9S-PYC-NARROW", "FW/CS": "CS-9S-SHIMANO-HG200"},
+      "Ladakh Pro 27s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-SUS-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-700X35-RALSON", "RD": "RD-SHIMANO-ALIVIO-M3100", "FD": "FD-SHIMANO-ALTUS-M370", "Shifter R": "SHIFTER-R-9S-SHIMANO-ALTUS-M370", "Shifter L": "SHIFTER-L-3S-SHIMANO-ALTUS-M370", "Crank": "CRANK-PROWHEEL-ALLOY-3S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-ALLOY-SEALED-QR", "Hub R": "HUB-REAR-ALLOY-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-ALLOY-FULL-PROWHEEL", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-9S-PYC-NARROW", "FW/CS": "CS-9S-SHIMANO-HG200"},
+      "Hampi Pro 27s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-RIGID-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-700X35-RALSON", "RD": "RD-SHIMANO-ALIVIO-M3100", "FD": "FD-SHIMANO-ALTUS-M370", "Shifter R": "SHIFTER-R-9S-SHIMANO-ALTUS-M370", "Shifter L": "SHIFTER-L-3S-SHIMANO-ALTUS-M370", "Crank": "CRANK-PROWHEEL-ALLOY-3S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-ALLOY-SEALED-QR", "Hub R": "HUB-REAR-ALLOY-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-ALLOY-FULL-PROWHEEL", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-9S-PYC-NARROW", "FW/CS": "CS-9S-SHIMANO-HG200"},
+      "Zozilla Pro 9s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-SUS-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-27.5-29X2.1-RALSON", "RD": "RD-SHIMANO-ALIVIO-M3100", "FD": "N/A", "Shifter R": "SHIFTER-R-9S-SHIMANO-ALTUS-M370", "Shifter L": "N/A", "Crank": "CRANK-PROWHEEL-ALLOY-1S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-ALLOY-SEALED-QR", "Hub R": "HUB-REAR-ALLOY-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-ALLOY-FULL-PROWHEEL", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-9S-PYC-NARROW", "FW/CS": "CS-9S-SHIMANO-HG200"},
+      "Coorg Pro 9s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-SUS-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-700X35-RALSON", "RD": "RD-SHIMANO-ALIVIO-M3100", "FD": "N/A", "Shifter R": "SHIFTER-R-9S-SHIMANO-ALTUS-M370", "Shifter L": "N/A", "Crank": "CRANK-PROWHEEL-ALLOY-1S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-ALLOY-SEALED-QR", "Hub R": "HUB-REAR-ALLOY-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-ALLOY-FULL-PROWHEEL", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-9S-PYC-NARROW", "FW/CS": "CS-9S-SHIMANO-HG200"},
+      "Ladakh Pro 9s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-SUS-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-700X35-RALSON", "RD": "RD-SHIMANO-ALIVIO-M3100", "FD": "N/A", "Shifter R": "SHIFTER-R-9S-SHIMANO-ALTUS-M370", "Shifter L": "N/A", "Crank": "CRANK-PROWHEEL-ALLOY-1S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-ALLOY-SEALED-QR", "Hub R": "HUB-REAR-ALLOY-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-ALLOY-FULL-PROWHEEL", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-9S-PYC-NARROW", "FW/CS": "CS-9S-SHIMANO-HG200"},
+      "Hampi Pro 9s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-RIGID-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-700X35-RALSON", "RD": "RD-SHIMANO-ALIVIO-M3100", "FD": "N/A", "Shifter R": "SHIFTER-R-9S-SHIMANO-ALTUS-M370", "Shifter L": "N/A", "Crank": "CRANK-PROWHEEL-ALLOY-1S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-ALLOY-SEALED-QR", "Hub R": "HUB-REAR-ALLOY-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-ALLOY-FULL-PROWHEEL", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-9S-PYC-NARROW", "FW/CS": "CS-9S-SHIMANO-HG200"},
+      "Zozilla Prime 24s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-SUS-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-27.5-29X2.1-RALSON", "RD": "RD-SHIMANO-ACERA-M360", "FD": "FD-SHIMANO-TY500", "Shifter R": "SHIFTER-R-8S-SHIMANO-M315", "Shifter L": "SHIFTER-L-3S-SHIMANO-M315", "Crank": "CRANK-PROWHEEL-ALLOY-3S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-ALLOY-SEALED-QR", "Hub R": "HUB-REAR-ALLOY-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-ALLOY-FULL-PROWHEEL", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-8S-PYC-NARROW", "FW/CS": "CS-8S-SHIMANO-HG200"},
+      "Coorg Prime 24s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-SUS-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-700X35-RALSON", "RD": "RD-SHIMANO-ACERA-M360", "FD": "FD-SHIMANO-TY500", "Shifter R": "SHIFTER-R-8S-SHIMANO-M315", "Shifter L": "SHIFTER-L-3S-SHIMANO-M315", "Crank": "CRANK-PROWHEEL-ALLOY-3S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-ALLOY-SEALED-QR", "Hub R": "HUB-REAR-ALLOY-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-ALLOY-FULL-PROWHEEL", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-8S-PYC-NARROW", "FW/CS": "CS-8S-SHIMANO-HG200"},
+      "Ladakh Prime 24s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-SUS-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-700X35-RALSON", "RD": "RD-SHIMANO-ACERA-M360", "FD": "FD-SHIMANO-TY500", "Shifter R": "SHIFTER-R-8S-SHIMANO-M315", "Shifter L": "SHIFTER-L-3S-SHIMANO-M315", "Crank": "CRANK-PROWHEEL-ALLOY-3S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-ALLOY-SEALED-QR", "Hub R": "HUB-REAR-ALLOY-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-ALLOY-FULL-PROWHEEL", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-8S-PYC-NARROW", "FW/CS": "CS-8S-SHIMANO-HG200"},
+      "Hampi Prime 24s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-RIGID-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-700X35-RALSON", "RD": "RD-SHIMANO-ACERA-M360", "FD": "FD-SHIMANO-TY500", "Shifter R": "SHIFTER-R-8S-SHIMANO-M315", "Shifter L": "SHIFTER-L-3S-SHIMANO-M315", "Crank": "CRANK-PROWHEEL-ALLOY-3S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-ALLOY-SEALED-QR", "Hub R": "HUB-REAR-ALLOY-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-ALLOY-FULL-PROWHEEL", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-8S-PYC-NARROW", "FW/CS": "CS-8S-SHIMANO-HG200"},
+      "Ooty Prime 24s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-SUS-STEEL-THLS-26T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-26T-36H", "Tyre": "TYRE-26-29X2.1-RALSON", "RD": "RD-SHIMANO-ACERA-M360", "FD": "FD-SHIMANO-TY500", "Shifter R": "SHIFTER-R-8S-SHIMANO-M315", "Shifter L": "SHIFTER-L-3S-SHIMANO-M315", "Crank": "CRANK-PROWHEEL-ALLOY-3S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-ALLOY-SEALED-QR", "Hub R": "HUB-REAR-ALLOY-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-ALLOY-FULL-PROWHEEL", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-8S-PYC-NARROW", "FW/CS": "CS-8S-SHIMANO-HG200"},
+      "Zozilla Prime 8s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-SUS-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-27.5-29X2.1-RALSON", "RD": "RD-SHIMANO-ACERA-M360", "FD": "N/A", "Shifter R": "SHIFTER-R-8S-SHIMANO-M315", "Shifter L": "N/A", "Crank": "CRANK-PROWHEEL-ALLOY-1S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-ALLOY-SEALED-QR", "Hub R": "HUB-REAR-ALLOY-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-ALLOY-FULL-PROWHEEL", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-8S-PYC-NARROW", "FW/CS": "CS-8S-SHIMANO-HG200"},
+      "Coorg Prime 8s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-SUS-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-700X35-RALSON", "RD": "RD-SHIMANO-ACERA-M360", "FD": "N/A", "Shifter R": "SHIFTER-R-8S-SHIMANO-M315", "Shifter L": "N/A", "Crank": "CRANK-PROWHEEL-ALLOY-1S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-ALLOY-SEALED-QR", "Hub R": "HUB-REAR-ALLOY-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-ALLOY-FULL-PROWHEEL", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-8S-PYC-NARROW", "FW/CS": "CS-8S-SHIMANO-HG200"},
+      "Ladakh Prime 8s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-SUS-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-700X35-RALSON", "RD": "RD-SHIMANO-ACERA-M360", "FD": "N/A", "Shifter R": "SHIFTER-R-8S-SHIMANO-M315", "Shifter L": "N/A", "Crank": "CRANK-PROWHEEL-ALLOY-1S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-ALLOY-SEALED-QR", "Hub R": "HUB-REAR-ALLOY-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-ALLOY-FULL-PROWHEEL", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-8S-PYC-NARROW", "FW/CS": "CS-8S-SHIMANO-HG200"},
+      "Hampi Prime 8s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-RIGID-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-700X35-RALSON", "RD": "RD-SHIMANO-ACERA-M360", "FD": "N/A", "Shifter R": "SHIFTER-R-8S-SHIMANO-M315", "Shifter L": "N/A", "Crank": "CRANK-PROWHEEL-ALLOY-1S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-ALLOY-SEALED-QR", "Hub R": "HUB-REAR-ALLOY-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-ALLOY-FULL-PROWHEEL", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-8S-PYC-NARROW", "FW/CS": "CS-8S-SHIMANO-HG200"},
+      "Ooty Prime 8s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-SUS-STEEL-THLS-26T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-26T-36H", "Tyre": "TYRE-26-29X2.1-RALSON", "RD": "RD-SHIMANO-ACERA-M360", "FD": "N/A", "Shifter R": "SHIFTER-R-8S-SHIMANO-M315", "Shifter L": "N/A", "Crank": "CRANK-PROWHEEL-ALLOY-1S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-ALLOY-SEALED-QR", "Hub R": "HUB-REAR-ALLOY-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-ALLOY-FULL-PROWHEEL", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-8S-PYC-NARROW", "FW/CS": "CS-8S-SHIMANO-HG200"},
+      "Zozilla Ace 21s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-SUS-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-27.5-29X2.1-RALSON", "RD": "RD-SHIMANO-TY300", "FD": "FD-SHIMANO-TY500", "Shifter R": "SHIFTER-EF500-7S-SHIMANO", "Shifter L": "SHIFTER-EF500-3S-SHIMANO", "Crank": "CRANK-PROWHEEL-ALLOY-3S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-STEEL-SEALED-QR", "Hub R": "HUB-REAR-STEEL-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-PVC-BIGBEN", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-7S-PYC-NARROW", "FW/CS": "CS-7S-SHIMANO-HG200"},
+      "Coorg Ace 21s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-SUS-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-700X35-RALSON", "RD": "RD-SHIMANO-TY300", "FD": "FD-SHIMANO-TY500", "Shifter R": "SHIFTER-EF500-7S-SHIMANO", "Shifter L": "SHIFTER-EF500-3S-SHIMANO", "Crank": "CRANK-PROWHEEL-ALLOY-3S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-STEEL-SEALED-QR", "Hub R": "HUB-REAR-STEEL-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-PVC-BIGBEN", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-7S-PYC-NARROW", "FW/CS": "CS-7S-SHIMANO-HG200"},
+      "Ladakh Ace 21s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-SUS-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-700X35-RALSON", "RD": "RD-SHIMANO-TY300", "FD": "FD-SHIMANO-TY500", "Shifter R": "SHIFTER-EF500-7S-SHIMANO", "Shifter L": "SHIFTER-EF500-3S-SHIMANO", "Crank": "CRANK-PROWHEEL-ALLOY-3S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-STEEL-SEALED-QR", "Hub R": "HUB-REAR-STEEL-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-PVC-BIGBEN", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-7S-PYC-NARROW", "FW/CS": "CS-7S-SHIMANO-HG200"},
+      "Hampi Ace 21s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-RIGID-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-700X35-RALSON", "RD": "RD-SHIMANO-TY300", "FD": "FD-SHIMANO-TY500", "Shifter R": "SHIFTER-EF500-7S-SHIMANO", "Shifter L": "SHIFTER-EF500-3S-SHIMANO", "Crank": "CRANK-PROWHEEL-ALLOY-3S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-STEEL-SEALED-QR", "Hub R": "HUB-REAR-STEEL-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-PVC-BIGBEN", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-7S-PYC-NARROW", "FW/CS": "CS-7S-SHIMANO-HG200"},
+      "Ooty Ace 21s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-SUS-STEEL-THLS-26T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-26T-36H", "Tyre": "TYRE-26-29X2.1-RALSON", "RD": "RD-SHIMANO-TY300", "FD": "FD-SHIMANO-TY500", "Shifter R": "SHIFTER-EF500-7S-SHIMANO", "Shifter L": "SHIFTER-EF500-3S-SHIMANO", "Crank": "CRANK-PROWHEEL-ALLOY-3S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-STEEL-SEALED-QR", "Hub R": "HUB-REAR-STEEL-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-PVC-BIGBEN", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-7S-PYC-NARROW", "FW/CS": "CS-7S-SHIMANO-HG200"},
+      "Zozilla Ace 7s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-SUS-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-27.5-29X2.1-RALSON", "RD": "RD-SHIMANO-TY300", "FD": "N/A", "Shifter R": "SHIFTER-EF500-7S-SHIMANO", "Shifter L": "N/A", "Crank": "CRANK-PROWHEEL-ALLOY-1S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-STEEL-SEALED-QR", "Hub R": "HUB-REAR-STEEL-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-PVC-BIGBEN", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-7S-PYC-NARROW", "FW/CS": "CS-7S-SHIMANO-HG200"},
+      "Coorg Ace 7s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-SUS-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-700X35-RALSON", "RD": "RD-SHIMANO-TY300", "FD": "N/A", "Shifter R": "SHIFTER-EF500-7S-SHIMANO", "Shifter L": "N/A", "Crank": "CRANK-PROWHEEL-ALLOY-1S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-STEEL-SEALED-QR", "Hub R": "HUB-REAR-STEEL-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-PVC-BIGBEN", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-7S-PYC-NARROW", "FW/CS": "CS-7S-SHIMANO-HG200"},
+      "Ladakh Ace 7s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-SUS-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-700X35-RALSON", "RD": "RD-SHIMANO-TY300", "FD": "N/A", "Shifter R": "SHIFTER-EF500-7S-SHIMANO", "Shifter L": "N/A", "Crank": "CRANK-PROWHEEL-ALLOY-1S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-STEEL-SEALED-QR", "Hub R": "HUB-REAR-STEEL-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-PVC-BIGBEN", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-7S-PYC-NARROW", "FW/CS": "CS-7S-SHIMANO-HG200"},
+      "Hampi Ace 7s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-RIGID-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-700X35-RALSON", "RD": "RD-SHIMANO-TY300", "FD": "N/A", "Shifter R": "SHIFTER-EF500-7S-SHIMANO", "Shifter L": "N/A", "Crank": "CRANK-PROWHEEL-ALLOY-1S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-STEEL-SEALED-QR", "Hub R": "HUB-REAR-STEEL-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-PVC-BIGBEN", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-7S-PYC-NARROW", "FW/CS": "CS-7S-SHIMANO-HG200"},
+      "Ooty Ace 7s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-SUS-STEEL-THLS-26T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-26T-36H", "Tyre": "TYRE-26-29X2.1-RALSON", "RD": "RD-SHIMANO-TY300", "FD": "N/A", "Shifter R": "SHIFTER-EF500-7S-SHIMANO", "Shifter L": "N/A", "Crank": "CRANK-PROWHEEL-ALLOY-1S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-STEEL-SEALED-QR", "Hub R": "HUB-REAR-STEEL-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-PVC-BIGBEN", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-7S-PYC-NARROW", "FW/CS": "CS-7S-SHIMANO-HG200"},
+      "Zozilla Lite 1s": {"Frame": "FRAME-ALLOY-SS", "Fork": "FORK-SUS-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-27.5-29X2.1-RALSON", "RD": "N/A", "FD": "N/A", "Shifter R": "N/A", "Shifter L": "N/A", "Crank": "CRANK-COTTERLESS-STEEL", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-STEEL-SEALED-QR", "Hub R": "HUB-REAR-STEEL-SEALED-QR-SS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-PVC-BIGBEN", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-SS-PYC", "FW/CS": "FW-18T-SINGLE-SPEED"},
+      "Coorg Lite 1s": {"Frame": "FRAME-ALLOY-SS", "Fork": "FORK-SUS-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-700X35-RALSON", "RD": "N/A", "FD": "N/A", "Shifter R": "N/A", "Shifter L": "N/A", "Crank": "CRANK-COTTERLESS-STEEL", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-STEEL-SEALED-QR", "Hub R": "HUB-REAR-STEEL-SEALED-QR-SS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-PVC-BIGBEN", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-SS-PYC", "FW/CS": "FW-18T-SINGLE-SPEED"},
+      "Ladakh Lite 1s": {"Frame": "FRAME-ALLOY-SS", "Fork": "FORK-SUS-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-700X35-RALSON", "RD": "N/A", "FD": "N/A", "Shifter R": "N/A", "Shifter L": "N/A", "Crank": "CRANK-COTTERLESS-STEEL", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-STEEL-SEALED-QR", "Hub R": "HUB-REAR-STEEL-SEALED-QR-SS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-PVC-BIGBEN", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-SS-PYC", "FW/CS": "FW-18T-SINGLE-SPEED"},
+      "Hampi Lite 1s": {"Frame": "FRAME-ALLOY-SS", "Fork": "FORK-RIGID-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-700X35-RALSON", "RD": "N/A", "FD": "N/A", "Shifter R": "N/A", "Shifter L": "N/A", "Crank": "CRANK-COTTERLESS-STEEL", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-STEEL-SEALED-QR", "Hub R": "HUB-REAR-STEEL-SEALED-QR-SS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-PVC-BIGBEN", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-SS-PYC", "FW/CS": "FW-18T-SINGLE-SPEED"}
+    };
+
+    // Category structure from "Data for omo bikes parts - rough.csv"
+    const tableStructure = [
+      { type: 'cat', label: 'Main Features' },
+      { type: 'row', label: 'Frame', key: 'Frame' },
+      { type: 'row', label: 'Fork', key: 'Fork' },
+      { type: 'row', label: 'Brake Type', key: 'Brake' },
+      { type: 'row', label: 'Rim/Wheel', key: 'Rim' },
+      { type: 'cat', label: 'Gear System' },
+      { type: 'row', label: 'Rear Derailleur', key: 'RD' },
+      { type: 'row', label: 'Front Derailleur', key: 'FD' },
+      { type: 'row', label: 'Shifter Right', key: 'Shifter R' },
+      { type: 'row', label: 'Shifter Left', key: 'Shifter L' },
+      { type: 'cat', label: 'Drivetrain' },
+      { type: 'row', label: 'Crankset', key: 'Crank' },
+      { type: 'row', label: 'Bottom Bracket', key: 'BB' },
+      { type: 'row', label: 'Cassette/Freewheel', key: 'FW/CS' },
+      { type: 'row', label: 'Chain', key: 'Chain' },
+      { type: 'cat', label: 'Wheels & Hubs' },
+      { type: 'row', label: 'Tires', key: 'Tyre' },
+      { type: 'row', label: 'Front Hub', key: 'Hub F' },
+      { type: 'row', label: 'Rear Hub', key: 'Hub R' },
+      { type: 'cat', label: 'Cockpit & Comfort' },
+      { type: 'row', label: 'Handlebar', key: 'Handlebar' },
+      { type: 'row', label: 'Stem', key: 'Stem' },
+      { type: 'row', label: 'Seat Post', key: 'Seat Post' },
+      { type: 'row', label: 'Pedals', key: 'Pedal' },
+      { type: 'row', label: 'Grips', key: 'Grips' }
+    ];
+
+    function init() {
+      const sortedBikes = Object.keys(bikeData).sort();
+      const selA = document.getElementById('bikeA');
+      const selB = document.getElementById('bikeB');
+      
+      sortedBikes.forEach(name => {
+        selA.options.add(new Option(name, name));
+        selB.options.add(new Option(name, name));
+      });
+    }
+
+    function runComparison() {
+      const valA = document.getElementById('bikeA').value;
+      const valB = document.getElementById('bikeB').value;
+      const error = document.getElementById('errorMsg');
+
+      if (!valA || !valB) {
+        error.textContent = "⚠ Please select two bicycles to compare.";
+        error.style.display = 'block';
+        return;
+      }
+      if (valA === valB) {
+        error.textContent = "⚠ Please select two different models.";
+        error.style.display = 'block';
+        return;
+      }
+
+      error.style.display = 'none';
+      renderTable(valA, valB);
+      document.getElementById('panelView').style.display = 'none';
+      document.getElementById('resultsView').style.display = 'block';
+    }
+
+    function renderTable(bikeAName, bikeBName) {
+      const bikeA = bikeData[bikeAName];
+      const bikeB = bikeData[bikeBName];
+      
+      // Build Header
+      document.getElementById('tableHead').innerHTML = `
+        <tr class="comp-header">
+          <th>Specifications</th>
+          <th>${bikeAName}</th>
+          <th>${bikeBName}</th>
+        </tr>
+      `;
+
+      // Build Body
+      let bodyHtml = '';
+      tableStructure.forEach(item => {
+        if (item.type === 'cat') {
+          bodyHtml += `<tr class="category-row"><td colspan="3">${item.label}</td></tr>`;
+        } else {
+          bodyHtml += `
+            <tr class="data-row">
+              <td class="spec-label">${item.label}</td>
+              <td>${bikeA[item.key] || 'N/A'}</td>
+              <td>${bikeB[item.key] || 'N/A'}</td>
+            </tr>
+          `;
+        }
+      });
+      document.getElementById('tableBody').innerHTML = bodyHtml;
+    }
+
+    function resetPage() {
+      document.getElementById('resultsView').style.display = 'none';
+      document.getElementById('panelView').style.display = 'block';
+    }
+
+    init();
+  </script>
+</div>
