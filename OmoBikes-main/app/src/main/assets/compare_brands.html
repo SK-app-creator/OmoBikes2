@@ -1,967 +1,1230 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Compare Cycles</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; font-family: sans-serif; background: #f0f7f0; -webkit-overflow-scrolling: touch; }
+
+    .home-bar { background: #fff; padding: 10px 16px; border-bottom: 1px solid #e0e0e0; }
+    .home-btn { background: #1565c0; border: none; border-radius: 20px; padding: 8px 18px; font-size: 13px; color: #fff; cursor: pointer; }
+
+    .hdr { background: #1b5e20; padding: 14px 16px; text-align: center; }
+    .hdr h1 { color: #fff; font-size: 17px; font-weight: 600; }
+    .hdr p { color: #a5d6a7; font-size: 11px; margin-top: 3px; }
+
+    .selector { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .selector label { font-size: 12px; color: #2e7d32; font-weight: 600; margin-bottom: 4px; display: block; }
+    .selector select {
+      width: 100%; padding: 10px 12px; border: 1px solid #c8e6c9;
+      border-radius: 10px; font-size: 14px; color: #111;
+      background: #fff; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M0 0l6 8 6-8z' fill='%232e7d32'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 12px center;
+    }
+
+    .cmp-btn {
+      margin: 0 16px 16px; padding: 14px; background: #2e7d32;
+      color: #fff; border: none; border-radius: 12px;
+      font-size: 15px; font-weight: 600; cursor: pointer;
+      width: calc(100% - 32px);
+    }
+    .cmp-btn:active { background: #1b5e20; }
+
+    .error-msg {
+      margin: 0 16px 16px; padding: 12px 16px;
+      background: #fff3e0; border: 1px solid #ffb74d;
+      border-radius: 10px; font-size: 13px; color: #e65100;
+      display: none;
+    }
+
+    .result { display: none; padding: 0 0 24px; }
+
+    .cycle-heads {
+      display: grid; grid-template-columns: 100px 1fr 1fr;
+      background: #1b5e20; padding: 12px 16px; gap: 8px;
+    }
+    .cycle-heads .lbl { font-size: 11px; color: #a5d6a7; }
+    .cycle-heads .name { font-size: 13px; font-weight: 600; color: #fff; line-height: 1.3; }
+    .cycle-heads .brand { font-size: 10px; color: #a5d6a7; margin-top: 2px; }
+
+    .row {
+      display: grid; grid-template-columns: 100px 1fr 1fr;
+      border-bottom: 1px solid #e8f5e9; gap: 8px; padding: 10px 16px;
+      align-items: start;
+    }
+    .row:nth-child(even) { background: #fff; }
+    .row:nth-child(odd) { background: #f9fdf9; }
+    .row .key { font-size: 11px; color: #888; line-height: 1.4; }
+    .row .val { font-size: 13px; color: #111; line-height: 1.4; }
+    .row .val.win { color: #2e7d32; font-weight: 600; }
+    .row .val.na { color: #bbb; font-style: italic; }
+
+    .price-row { background: #e8f5e9 !important; }
+    .price-row .val { font-size: 15px; font-weight: 700; color: #1b5e20; }
+
+    .buy-row { padding: 12px 16px; display: grid; grid-template-columns: 100px 1fr 1fr; gap: 8px; }
+    .buy-btn {
+      padding: 10px 8px; background: #2e7d32; color: #fff;
+      border: none; border-radius: 8px; font-size: 12px;
+      font-weight: 600; cursor: pointer; text-align: center;
+      display: block; text-decoration: none;
+    }
+    .buy-btn.grey { background: #78909c; }
+
+    .action-row { display: flex; flex-direction: column; gap: 10px; padding: 16px 16px 24px; }
+    .again-btn { width: 100%; padding: 14px; background: #2e7d32; color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; }
+    .again-btn:active { background: #1b5e20; }
+    .exit-btn { width: 100%; padding: 12px; background: none; color: #888; border: 1px solid #ddd; border-radius: 12px; font-size: 14px; cursor: pointer; }
+  </style>
 </head>
 <body>
-<style>
-/* OmoBikes Cycle Comparison Tool */
-.omo-compare { max-width: 100%; margin: 0; padding: 0 0 40px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
 
-/* HERO */
-.omo-hero {
-  background: linear-gradient(135deg, #1b5e20, #2e7d32);
-  padding: 22px 32px;
-  border-radius: 16px;
-  margin-bottom: 16px;
-}
-.omo-hero-inner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-}
-.omo-hero-emoji {
-  background: #fff;
-  border-radius: 50%;
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-}
-.omo-hero-text {
-  color: #fff;
-  font-size: 15px;
-  font-weight: 500;
-  line-height: 1.5;
-  text-align: center;
-}
-
-/* SELECTOR CARD */
-.omo-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-  margin-bottom: 16px;
-}
-.omo-card-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #1b5e20;
-  margin-bottom: 16px;
-}
-.omo-two-col {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-@media(max-width: 540px) {
-  .omo-two-col { grid-template-columns: 1fr; }
-}
-.omo-sel-group label {
-  display: block;
-  font-size: 11px;
-  font-weight: 700;
-  color: #2e7d32;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 6px;
-}
-.omo-sel-group select {
-  width: 100%;
-  padding: 11px 32px 11px 14px;
-  border: 1.5px solid #c8e6c9;
-  border-radius: 10px;
-  font-size: 14px;
-  color: #222;
-  background: #fff;
-  appearance: none;
-  cursor: pointer;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M0 0l6 8 6-8z' fill='%232e7d32'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  transition: border-color 0.2s;
-}
-.omo-sel-group select:focus { outline: none; border-color: #1b5e20; }
-
-/* BUTTON */
-.omo-btn {
-  width: 100%;
-  padding: 14px;
-  background: #1b5e20;
-  color: #fff;
-  border: none;
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.omo-btn:hover { background: #145214; }
-
-/* ERROR */
-.omo-err {
-  display: none;
-  margin-top: 12px;
-  padding: 11px 14px;
-  background: #fff3e0;
-  border: 1px solid #ffb74d;
-  border-radius: 10px;
-  font-size: 13px;
-  color: #e65100;
-}
-
-/* RESULT */
-.omo-result { display: none; }
-
-.omo-result-header {
-  display: grid;
-  grid-template-columns: 130px 1fr 1fr;
-  background: #1b5e20;
-  border-radius: 12px 12px 0 0;
-  overflow: hidden;
-}
-.omo-rh-blank { padding: 16px; background: #145214; }
-.omo-rh-cycle { padding: 16px; border-left: 1px solid rgba(255,255,255,0.15); }
-.omo-rh-name { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 4px; }
-.omo-rh-cat  { font-size: 11px; color: #a5d6a7; }
-
-.omo-tbl-wrap { overflow-x: auto; background: #fff; border-radius: 0 0 12px 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-.omo-tbl { width: 100%; border-collapse: collapse; }
-.omo-tbl tr:nth-child(even) { background: #fafafa; }
-
-.omo-tkey {
-  padding: 12px 14px;
-  font-size: 11px;
-  color: #888;
-  font-weight: 500;
-  background: #f5f5f5;
-  border-right: 1px solid #eee;
-  border-bottom: 1px solid #eee;
-  width: 130px;
-  vertical-align: middle;
-}
-.omo-tval {
-  padding: 12px 14px;
-  font-size: 13px;
-  color: #333;
-  border-right: 1px solid #eee;
-  border-bottom: 1px solid #eee;
-  vertical-align: middle;
-  line-height: 1.4;
-}
-.omo-tval:last-child { border-right: none; }
-.omo-tval.win { color: #1b5e20; font-weight: 600; }
-.omo-tval.win::before { content: "✓ "; }
-.omo-tval.same { color: #999; }
-
-.omo-cat-row .omo-tkey { background: #e8f5e9; color: #1b5e20; font-weight: 600; }
-.omo-cat-row .omo-tval { background: #e8f5e9; font-weight: 500; }
-
-/* ACTION ROW */
-.omo-action {
-  display: flex;
-  gap: 12px;
-  margin-top: 14px;
-}
-.omo-again-btn {
-  flex: 1;
-  padding: 13px;
-  background: #2e7d32;
-  color: #fff;
-  border: none;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.omo-again-btn:hover { background: #1b5e20; }
-.omo-exit-btn {
-  flex: 1;
-  padding: 13px;
-  background: none;
-  color: #888;
-  border: 1px solid #ddd;
-  border-radius: 12px;
-  font-size: 14px;
-  cursor: pointer;
-}
-.omo-exit-btn:hover { background: #f5f5f5; }
-</style>
-
-<!-- HERO -->
-<div class="omo-compare">
-<div style="background:#fff;padding:10px 16px;border-bottom:1px solid #e0e0e0;">
-  <button onclick="window.location.href='home.html'" style="background:#1565c0;border:none;border-radius:20px;padding:8px 18px;font-size:13px;color:#fff;cursor:pointer;">&#8592; Home</button>
+<div class="home-bar">
+  <button class="home-btn" onclick="window.location.href='home.html'">&#8592; Home</button>
 </div>
 
-  <div class="omo-hero">
-    <div class="omo-hero-inner">
-      <div class="omo-hero-emoji">&#x1F6B2;</div>
-      <div class="omo-hero-text">Select any two cycles to see a detailed side-by-side spec comparison</div>
-      <div class="omo-hero-emoji">&#x1F6B2;</div>
+<div class="hdr">
+  <h1>Compare Cycles</h1>
+  <p>Select two cycles to compare side by side</p>
+</div>
+
+<div id="selectorView">
+  <div class="selector">
+    <div>
+      <label>Cycle A</label>
+      <select id="selA"><option value="">-- Select a cycle --</option></select>
+    </div>
+    <div>
+      <label>Cycle B</label>
+      <select id="selB"><option value="">-- Select a cycle --</option></select>
     </div>
   </div>
+  <button class="cmp-btn" onclick="compare()">Compare Now &#8594;</button>
+  <div class="error-msg" id="errMsg"></div>
+</div>
 
-  <!-- SELECTOR -->
-  <div class="omo-card" id="omoSelector">
-    <div class="omo-card-title">Select two cycles to compare</div>
-    <div class="omo-two-col">
-      <div class="omo-sel-group">
-        <label>Cycle A</label>
-        <select id="omoSelA"><option value="">-- Choose a cycle --</option></select>
-      </div>
-      <div class="omo-sel-group">
-        <label>Cycle B</label>
-        <select id="omoSelB"><option value="">-- Choose a cycle --</option></select>
-      </div>
-    </div>
-    <button class="omo-btn" onclick="omoCompare()">Compare Now &#8594;</button>
-    <div class="omo-err" id="omoErr"></div>
+<div class="result" id="resultView">
+  <div class="cycle-heads" id="cycleHeads"></div>
+  <div id="tableRows"></div>
+  <div class="buy-row">
+    <div></div>
+    <a id="buyA" class="buy-btn" target="_blank">View on Site</a>
+    <a id="buyB" class="buy-btn grey" target="_blank">View on Site</a>
   </div>
-
-  <!-- RESULT -->
-  <div class="omo-result" id="omoResult">
-    <div class="omo-result-header">
-      <div class="omo-rh-blank"></div>
-      <div class="omo-rh-cycle" id="omoHeadA"></div>
-      <div class="omo-rh-cycle" id="omoHeadB"></div>
-    </div>
-    <div class="omo-tbl-wrap">
-      <table class="omo-tbl" id="omoTable"></table>
-    </div>
-    <div class="omo-action">
-      <button class="omo-again-btn" onclick="omoAgain()">&#x1F504; Compare Other Cycles</button>
-      <button class="omo-exit-btn" onclick="omoTop()">&#8593; Back to Top</button>
-    </div>
+  <div class="action-row">
+    <button class="again-btn" onclick="goBack()">&#x1F504; Compare Other Cycles</button>
+    <button class="exit-btn" onclick="exitApp()">&#10005; Exit</button>
   </div>
-
 </div>
 
 <script>
-var cycles = [
-  {
-    name: "Zozila Cues 18s",
+var cycles = {
+  "Coorg Cues": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/coorg-cues-18-gears-hybrid",
+    price: "Rs 22,999",
+    category: "Hybrid",
+    type: "Hybrid - city & fitness",
+    frame: "Alloy 6061, 18 inch",
+    wheel: "700c",
+    gears: "18 speed (2x9)",
+    gearBrand: "Shimano Cues U4000",
+    brakes: "Hydraulic disc",
+    fork: "Suspension",
+    rim: "Alloy double wall",
+    tyre: "700x35c Nylon",
+    handlebar: "Steel",
+    seatPost: "Alloy 12 inch",
+    height: "5ft5 - 5ft11",
+    bestFor: "Fitness & city riding"
+  },
+  "Zozila Prime": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/zozila-prime-alloy-29t-mtb-24-speed-zoom-suspension-shimano-gear",
+    price: "Rs 19,999",
     category: "MTB",
-    gears: "18 speed (2×9)",
-    gearBrand: "Shimano Cues",
-    frame: "Alloy (Multi Speed)",
-    fork: "Suspension fork (29T compatible)",
-    wheel: "29 inch",
-    tyre: "27.5×2.1 MTB",
-    rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Alloy sealed bearing hubs",
-    handlebar: "Riser steel 31.8mm",
-    seatPost: "Alloy 27.2mm 300mm",
-    isMTB: true,
-    isSingle: false
-  },
-  {
-    name: "Coorg Cues 18s",
-    category: "Hybrid / Road",
-    gears: "18 speed (2×9)",
-    gearBrand: "Shimano Cues",
-    frame: "Alloy (Multi Speed)",
-    fork: "Suspension fork (29T compatible)",
-    wheel: "700c",
-    tyre: "700×35x Road-Hybrid",
-    rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Alloy sealed bearing hubs",
-    handlebar: "Riser steel 31.8mm",
-    seatPost: "Alloy 27.2mm 300mm",
-    isMTB: false,
-    isSingle: false
-  },
-  {
-    name: "Hampi Cues 18s",
-    category: "Hybrid / Road",
-    gears: "18 speed (2×9)",
-    gearBrand: "Shimano Cues",
-    frame: "Alloy (Multi Speed)",
-    fork: "Rigid steel fork",
-    wheel: "700c",
-    tyre: "700×35x Road-Hybrid",
-    rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Alloy sealed bearing hubs",
-    handlebar: "Riser steel 31.8mm",
-    seatPost: "Alloy 27.2mm 300mm",
-    isMTB: false,
-    isSingle: false
-  },
-  {
-    name: "Ladakh Cues 18s",
-    category: "Hybrid / Road",
-    gears: "18 speed (2×9)",
-    gearBrand: "Shimano Cues",
-    frame: "Alloy (Multi Speed)",
-    fork: "Suspension fork (29T compatible)",
-    wheel: "700c",
-    tyre: "700×35x Road-Hybrid",
-    rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Alloy sealed bearing hubs",
-    handlebar: "Riser steel 31.8mm",
-    seatPost: "Alloy 27.2mm 300mm",
-    isMTB: false,
-    isSingle: false
-  },
-  {
-    name: "Zozila Cues 9s",
-    category: "MTB",
-    gears: "9 speed (1×9)",
-    gearBrand: "Shimano Cues",
-    frame: "Alloy (Multi Speed)",
-    fork: "Suspension fork (29T compatible)",
-    wheel: "29 inch",
-    tyre: "27.5×2.1 MTB",
-    rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Alloy sealed bearing hubs",
-    handlebar: "Riser steel 31.8mm",
-    seatPost: "Alloy 27.2mm 300mm",
-    isMTB: true,
-    isSingle: false
-  },
-  {
-    name: "Coorg Cues 9s",
-    category: "Hybrid / Road",
-    gears: "9 speed (1×9)",
-    gearBrand: "Shimano Cues",
-    frame: "Alloy (Multi Speed)",
-    fork: "Suspension fork (29T compatible)",
-    wheel: "700c",
-    tyre: "700×35x Road-Hybrid",
-    rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Alloy sealed bearing hubs",
-    handlebar: "Riser steel 31.8mm",
-    seatPost: "Alloy 27.2mm 300mm",
-    isMTB: false,
-    isSingle: false
-  },
-  {
-    name: "Hampi Cues 9s",
-    category: "Hybrid / Road",
-    gears: "9 speed (1×9)",
-    gearBrand: "Shimano Cues",
-    frame: "Alloy (Multi Speed)",
-    fork: "Rigid steel fork",
-    wheel: "700c",
-    tyre: "700×35x Road-Hybrid",
-    rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Alloy sealed bearing hubs",
-    handlebar: "Riser steel 31.8mm",
-    seatPost: "Alloy 27.2mm 300mm",
-    isMTB: false,
-    isSingle: false
-  },
-  {
-    name: "Ladakh Cues 9s",
-    category: "Hybrid / Road",
-    gears: "9 speed (1×9)",
-    gearBrand: "Shimano Cues",
-    frame: "Alloy (Multi Speed)",
-    fork: "Suspension fork (29T compatible)",
-    wheel: "700c",
-    tyre: "700×35x Road-Hybrid",
-    rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Alloy sealed bearing hubs",
-    handlebar: "Riser steel 31.8mm",
-    seatPost: "Alloy 27.2mm 300mm",
-    isMTB: false,
-    isSingle: false
-  },
-  {
-    name: "Zozilla Pro 27s",
-    category: "MTB",
-    gears: "27 speed (3×9)",
-    gearBrand: "Shimano Alivio",
-    frame: "Alloy (Multi Speed)",
-    fork: "Suspension fork (29T compatible)",
-    wheel: "29 inch",
-    tyre: "27.5×2.1 MTB",
-    rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Alloy sealed bearing hubs",
-    handlebar: "Riser steel 31.8mm",
-    seatPost: "Alloy 27.2mm 300mm",
-    isMTB: true,
-    isSingle: false
-  },
-  {
-    name: "Coorg Pro 27s",
-    category: "Hybrid / Road",
-    gears: "27 speed (3×9)",
-    gearBrand: "Shimano Alivio",
-    frame: "Alloy (Multi Speed)",
-    fork: "Suspension fork (29T compatible)",
-    wheel: "700c",
-    tyre: "700×35x Road-Hybrid",
-    rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Alloy sealed bearing hubs",
-    handlebar: "Riser steel 31.8mm",
-    seatPost: "Alloy 27.2mm 300mm",
-    isMTB: false,
-    isSingle: false
-  },
-  {
-    name: "Ladakh Pro 27s",
-    category: "Hybrid / Road",
-    gears: "27 speed (3×9)",
-    gearBrand: "Shimano Alivio",
-    frame: "Alloy (Multi Speed)",
-    fork: "Suspension fork (29T compatible)",
-    wheel: "700c",
-    tyre: "700×35x Road-Hybrid",
-    rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Alloy sealed bearing hubs",
-    handlebar: "Riser steel 31.8mm",
-    seatPost: "Alloy 27.2mm 300mm",
-    isMTB: false,
-    isSingle: false
-  },
-  {
-    name: "Hampi Pro 27s",
-    category: "Hybrid / Road",
-    gears: "27 speed (3×9)",
-    gearBrand: "Shimano Alivio",
-    frame: "Alloy (Multi Speed)",
-    fork: "Rigid steel fork",
-    wheel: "700c",
-    tyre: "700×35x Road-Hybrid",
-    rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Alloy sealed bearing hubs",
-    handlebar: "Riser steel 31.8mm",
-    seatPost: "Alloy 27.2mm 300mm",
-    isMTB: false,
-    isSingle: false
-  },
-  {
-    name: "Zozilla Pro 9s",
-    category: "MTB",
-    gears: "9 speed (1×9)",
-    gearBrand: "Shimano Alivio",
-    frame: "Alloy (Multi Speed)",
-    fork: "Suspension fork (29T compatible)",
-    wheel: "29 inch",
-    tyre: "27.5×2.1 MTB",
-    rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Alloy sealed bearing hubs",
-    handlebar: "Riser steel 31.8mm",
-    seatPost: "Alloy 27.2mm 300mm",
-    isMTB: true,
-    isSingle: false
-  },
-  {
-    name: "Coorg Pro 9s",
-    category: "Hybrid / Road",
-    gears: "9 speed (1×9)",
-    gearBrand: "Shimano Alivio",
-    frame: "Alloy (Multi Speed)",
-    fork: "Suspension fork (29T compatible)",
-    wheel: "700c",
-    tyre: "700×35x Road-Hybrid",
-    rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Alloy sealed bearing hubs",
-    handlebar: "Riser steel 31.8mm",
-    seatPost: "Alloy 27.2mm 300mm",
-    isMTB: false,
-    isSingle: false
-  },
-  {
-    name: "Ladakh Pro 9s",
-    category: "Hybrid / Road",
-    gears: "9 speed (1×9)",
-    gearBrand: "Shimano Alivio",
-    frame: "Alloy (Multi Speed)",
-    fork: "Suspension fork (29T compatible)",
-    wheel: "700c",
-    tyre: "700×35x Road-Hybrid",
-    rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Alloy sealed bearing hubs",
-    handlebar: "Riser steel 31.8mm",
-    seatPost: "Alloy 27.2mm 300mm",
-    isMTB: false,
-    isSingle: false
-  },
-  {
-    name: "Hampi Pro 9s",
-    category: "Hybrid / Road",
-    gears: "9 speed (1×9)",
-    gearBrand: "Shimano Alivio",
-    frame: "Alloy (Multi Speed)",
-    fork: "Rigid steel fork",
-    wheel: "700c",
-    tyre: "700×35x Road-Hybrid",
-    rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Alloy sealed bearing hubs",
-    handlebar: "Riser steel 31.8mm",
-    seatPost: "Alloy 27.2mm 300mm",
-    isMTB: false,
-    isSingle: false
-  },
-  {
-    name: "Zozilla Prime 24s",
-    category: "MTB",
-    gears: "24 speed (3×8)",
+    type: "MTB - off-road & trails",
+    frame: "Alloy 6061",
+    wheel: "27.5 / 29 inch",
+    gears: "24 speed (3x8)",
     gearBrand: "Shimano Acera",
-    frame: "Alloy (Multi Speed)",
-    fork: "Suspension fork (29T compatible)",
-    wheel: "29 inch",
-    tyre: "27.5×2.1 MTB",
-    rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Alloy sealed bearing hubs",
-    handlebar: "Riser steel 31.8mm",
-    seatPost: "Alloy 27.2mm 300mm",
-    isMTB: true,
-    isSingle: false
+    brakes: "Disc brake",
+    fork: "Zoom suspension",
+    rim: "Alloy double wall",
+    tyre: "MTB 2.1 inch",
+    handlebar: "Riser",
+    seatPost: "Alloy",
+    height: "5ft4 - 6ft0",
+    bestFor: "Off-road & trails"
   },
-  {
-    name: "Coorg Prime 24s",
-    category: "Hybrid / Road",
-    gears: "24 speed (3×8)",
-    gearBrand: "Shimano Acera",
-    frame: "Alloy (Multi Speed)",
-    fork: "Suspension fork (29T compatible)",
+  "Ladakh Lite": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/ladakh-lite-alloy-hybrid-cycle-29t-disc-brake",
+    price: "Under Rs 15,000",
+    category: "Hybrid",
+    type: "Hybrid - single speed",
+    frame: "Alloy - under 13kg",
+    wheel: "29 / 700c",
+    gears: "Single speed",
+    gearBrand: "No gears",
+    brakes: "Disc brake",
+    fork: "Lockout suspension",
+    rim: "Alloy",
+    tyre: "700c",
+    handlebar: "Flat",
+    seatPost: "Alloy",
+    height: "5ft4 - 6ft0",
+    bestFor: "City commute & exercise"
+  },
+  "Black Hawk": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/black-hawk-single-speed-road-bike",
+    price: "Rs 14,999",
+    category: "Road / Single Speed",
+    type: "Road bike - single speed",
+    frame: "Alloy 6061, Steel rigid fork",
     wheel: "700c",
-    tyre: "700×35x Road-Hybrid",
-    rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Alloy sealed bearing hubs",
-    handlebar: "Riser steel 31.8mm",
-    seatPost: "Alloy 27.2mm 300mm",
-    isMTB: false,
-    isSingle: false
+    gears: "Single speed",
+    gearBrand: "No gears (18T freewheel)",
+    brakes: "Disc brake",
+    fork: "Steel rigid",
+    rim: "700c Alloy double wall",
+    tyre: "700x25c Nylon",
+    handlebar: "Alloy dropbars",
+    seatPost: "Alloy 12 inch",
+    height: "5ft5 - 5ft11",
+    bestFor: "Fitness & city riding - road style"
   },
-  {
-    name: "Ladakh Prime 24s",
-    category: "Hybrid / Road",
-    gears: "24 speed (3×8)",
-    gearBrand: "Shimano Acera",
-    frame: "Alloy (Multi Speed)",
-    fork: "Suspension fork (29T compatible)",
+  "Hampi Lite": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/hampi-700",
+    price: "Rs 11,499",
+    category: "Hybrid / Single Speed",
+    type: "Hybrid - single speed, lightweight",
+    frame: "Alloy 6061",
     wheel: "700c",
-    tyre: "700×35x Road-Hybrid",
-    rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Alloy sealed bearing hubs",
-    handlebar: "Riser steel 31.8mm",
-    seatPost: "Alloy 27.2mm 300mm",
-    isMTB: false,
-    isSingle: false
+    gears: "Single speed",
+    gearBrand: "No gears (18T freewheel)",
+    brakes: "Disc brake",
+    fork: "Steel rigid",
+    rim: "700c Alloy double wall",
+    tyre: "700x35c Nylon",
+    handlebar: "Steel flat",
+    seatPost: "Alloy 12 inch",
+    height: "5ft5 - 5ft11",
+    bestFor: "City commute & fitness - budget friendly"
   },
-  {
-    name: "Hampi Prime 24s",
-    category: "Hybrid / Road",
-    gears: "24 speed (3×8)",
-    gearBrand: "Shimano Acera",
-    frame: "Alloy (Multi Speed)",
-    fork: "Rigid steel fork",
+  "Cradiac Gunner Pro 21": {
+    brand: "Cradiac",
+    url: "https://cradiac.com/products/cradiac-gunner-pro-teal-blue-21s-700ct-hybrid-cycle",
+    price: "Rs 17,998",
+    category: "Hybrid",
+    type: "Hybrid - city",
+    frame: "Alloy 6061, 18.5 inch",
     wheel: "700c",
-    tyre: "700×35x Road-Hybrid",
-    rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Alloy sealed bearing hubs",
-    handlebar: "Riser steel 31.8mm",
-    seatPost: "Alloy 27.2mm 300mm",
-    isMTB: false,
-    isSingle: false
+    gears: "21 speed (3x7)",
+    gearBrand: "Shimano Tourney",
+    brakes: "Disc brake",
+    fork: "Lockout suspension",
+    rim: "Not specified",
+    tyre: "700x35c",
+    handlebar: "Not specified",
+    seatPost: "Not specified",
+    height: "15+ years, unisex",
+    bestFor: "City & long rides"
   },
-  {
-    name: "Ooty Prime 24s",
+  "Cradiac Machine Lite 21": {
+    brand: "Cradiac",
+    url: "https://cradiac.com/products/cradiac-machine-lite-21s-red-700ct-hybrid-cycle",
+    price: "Rs 15,000",
+    category: "Hybrid",
+    type: "Hybrid - city",
+    frame: "Alloy 6061, 19.5 inch",
+    wheel: "700c",
+    gears: "21 speed (3x7)",
+    gearBrand: "Shimano Tourney",
+    brakes: "Disc brake (160mm)",
+    fork: "Rigid fork",
+    rim: "Alloy double wall",
+    tyre: "700x35c Nylon",
+    handlebar: "Flat",
+    seatPost: "Alloy",
+    height: "15+ years, unisex",
+    bestFor: "City commute"
+  },
+  "Cradiac XC 3000 Lite": {
+    brand: "Cradiac",
+    url: "https://cradiac.com/products/cradiac-xc-3000-lite-22s-silver-orange-27-5t-cycle",
+    price: "Rs 30,631",
     category: "MTB",
-    gears: "24 speed (3×8)",
-    gearBrand: "Shimano Acera",
+    type: "MTB - trails",
+    frame: "Alloy 6061",
+    wheel: "27.5 inch",
+    gears: "22 speed (2x11)",
+    gearBrand: "Shimano Cues",
+    brakes: "Hydraulic disc",
+    fork: "Zoom lockout suspension",
+    rim: "Alloy",
+    tyre: "27.5 MTB",
+    handlebar: "Riser",
+    seatPost: "Alloy",
+    height: "14+ years, unisex",
+    bestFor: "Trails & off-road"
+  },
+  "Rockrider Explore 40": {
+    brand: "Decathlon",
+    url: "https://www.decathlon.in/p/8943176/rockrider-expl40-8-gear-disc-brake-mountain-bike-metallic-green",
+    price: "Rs 16,999",
+    category: "MTB",
+    type: "MTB - all terrain",
+    frame: "Aluminium",
+    wheel: "27.5 inch",
+    gears: "8 speed",
+    gearBrand: "Not specified",
+    brakes: "Disc brake",
+    fork: "Suspension",
+    rim: "Not specified",
+    tyre: "27.5 MTB",
+    handlebar: "Riser",
+    seatPost: "Alloy",
+    height: "S/M/L available",
+    bestFor: "All terrain riding"
+  },
+  "Rockrider ST120": {
+    brand: "Decathlon",
+    url: "https://www.decathlon.in/p/8591166/mountain-bike-rockrider-st120-disc-brakes-aluminium-frame-1x9-speed-27-5in",
+    price: "Not listed",
+    category: "MTB",
+    type: "MTB - sport",
+    frame: "Aluminium",
+    wheel: "27.5 inch",
+    gears: "9 speed (1x9)",
+    gearBrand: "Not specified",
+    brakes: "Disc brake",
+    fork: "Suspension",
+    rim: "Not specified",
+    tyre: "27.5 MTB",
+    handlebar: "Riser",
+    seatPost: "Alloy",
+    height: "S/M/L available",
+    bestFor: "Sport MTB riding"
+  },
+  "Riverside 500": {
+    brand: "Decathlon",
+    url: "https://www.decathlon.in/p/8591163/hybrid-cycle-riverside-500-disc-brakes-aluminium-frame-63mm-suspension",
+    price: "Rs 19,999",
+    category: "Hybrid",
+    type: "Hybrid - city",
+    frame: "Aluminium",
+    wheel: "700c",
+    gears: "Not specified",
+    gearBrand: "Not specified",
+    brakes: "Disc brake",
+    fork: "63mm suspension",
+    rim: "Not specified",
+    tyre: "700c",
+    handlebar: "Flat",
+    seatPost: "Alloy",
+    height: "S/M/L available",
+    bestFor: "City & fitness riding"
+  },
+  "Kross Berlin": {
+    brand: "Kross",
+    url: "https://krossbikes.in/products/kross-berlin-27-5t-mtb-single-speed-dual-disc-brakes-alloy-rims-suspension-fork-grey-copy",
+    price: "Rs 12,560",
+    category: "MTB / Single Speed",
+    type: "MTB - single speed",
+    frame: "Steel TIG-welded, 43cm",
+    wheel: "27.5 inch",
+    gears: "Single speed",
+    gearBrand: "No gears (freewheel system)",
+    brakes: "Mechanical disc (front & rear)",
+    fork: "27.5T suspension, disc ready",
+    rim: "Alloy double wall",
+    tyre: "27.5x1.75 Hartex Nylon",
+    handlebar: "660mm hybrid, 31.8mm",
+    seatPost: "MTB saddle alloy",
+    height: "Not specified",
+    bestFor: "City roads & light trails"
+  },
+  "Kross Emerg 27.5T": {
+    brand: "Kross",
+    url: "https://krossbikes.in/products/kross-emerg-27-5t-24s-dd-imp",
+    price: "Rs 22,320",
+    category: "MTB",
+    type: "MTB - 24 speed",
+    frame: "Alloy, 34.30cm (27.5T)",
+    wheel: "27.5 inch",
+    gears: "24 speed (3x8)",
+    gearBrand: "LTWOO",
+    brakes: "Mechanical disc (front & rear)",
+    fork: "Suspension with mechanical lockout",
+    rim: "Alloy double wall",
+    tyre: "27.5x2.10",
+    handlebar: "Steel 31.8mm, 620mm",
+    seatPost: "QR saddle alloy",
+    height: "Not specified",
+    bestFor: "MTB trails & off-road"
+  },
+  "Kross Hopper 27.5T": {
+    brand: "Kross",
+    url: "https://krossbikes.in/products/hopper-27-5t-29t-24s-dd-copy",
+    price: "Rs 27,040",
+    category: "MTB",
+    type: "MTB - 24 speed",
+    frame: "Alloy, 43cm (27.5T)",
+    wheel: "27.5 inch",
+    gears: "24 speed (3x8)",
+    gearBrand: "Shimano Altus M310 + Tourney TY-700",
+    brakes: "Dual disc Zoom",
+    fork: "Suspension with lockout (Zoom)",
+    rim: "Alloy double wall",
+    tyre: "27.5x2.10",
+    handlebar: "Alloy 31.8mm, 660mm (Zoom)",
+    seatPost: "QR saddle alloy",
+    height: "Not specified",
+    bestFor: "MTB trails & off-road with Shimano gears"
+  },
+  "Zozila Cues 18s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/zozila-cues-18s",
+    price: "Visit omobikes.com",
+    category: "MTB",
+    type: "MTB",
     frame: "Alloy (Multi Speed)",
-    fork: "Suspension fork (29T compatible)",
+    wheel: "29 inch",
+    gears: "18 speed (2x9)",
+    gearBrand: "Shimano Cues",
+    brakes: "Mechanical disc brake",
+    fork: "Suspension fork (29T)",
+    rim: "Alloy Double Wall",
+    tyre: "27.5x2.1 MTB",
+    handlebar: "Riser steel 31.8mm",
+    seatPost: "Alloy 27.2mm 300mm",
+    height: "Not specified",
+    bestFor: "MTB cycling"
+  },
+  "Coorg Cues 18s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/coorg-cues-18s",
+    price: "Visit omobikes.com",
+    category: "Hybrid / Road",
+    type: "Hybrid / Road",
+    frame: "Alloy (Multi Speed)",
+    wheel: "700c",
+    gears: "18 speed (2x9)",
+    gearBrand: "Shimano Cues",
+    brakes: "Mechanical disc brake",
+    fork: "Suspension fork (29T)",
+    rim: "Alloy Double Wall",
+    tyre: "700x35c",
+    handlebar: "Riser steel 31.8mm",
+    seatPost: "Alloy 27.2mm 300mm",
+    height: "Not specified",
+    bestFor: "Hybrid / Road cycling"
+  },
+  "Hampi Cues 18s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/hampi-cues-18s",
+    price: "Visit omobikes.com",
+    category: "Hybrid / Road",
+    type: "Hybrid / Road",
+    frame: "Alloy (Multi Speed)",
+    wheel: "700c",
+    gears: "18 speed (2x9)",
+    gearBrand: "Shimano Cues",
+    brakes: "Mechanical disc brake",
+    fork: "Rigid steel fork",
+    rim: "Alloy Double Wall",
+    tyre: "700x35c",
+    handlebar: "Riser steel 31.8mm",
+    seatPost: "Alloy 27.2mm 300mm",
+    height: "Not specified",
+    bestFor: "Hybrid / Road cycling"
+  },
+  "Ladakh Cues 18s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/ladakh-cues-18s",
+    price: "Visit omobikes.com",
+    category: "Hybrid / Road",
+    type: "Hybrid / Road",
+    frame: "Alloy (Multi Speed)",
+    wheel: "700c",
+    gears: "18 speed (2x9)",
+    gearBrand: "Shimano Cues",
+    brakes: "Mechanical disc brake",
+    fork: "Suspension fork (29T)",
+    rim: "Alloy Double Wall",
+    tyre: "700x35c",
+    handlebar: "Riser steel 31.8mm",
+    seatPost: "Alloy 27.2mm 300mm",
+    height: "Not specified",
+    bestFor: "Hybrid / Road cycling"
+  },
+  "Zozila Cues 9s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/zozila-cues-9s",
+    price: "Visit omobikes.com",
+    category: "MTB",
+    type: "MTB",
+    frame: "Alloy (Multi Speed)",
+    wheel: "29 inch",
+    gears: "9 speed (1x9)",
+    gearBrand: "Shimano Cues",
+    brakes: "Mechanical disc brake",
+    fork: "Suspension fork (29T)",
+    rim: "Alloy Double Wall",
+    tyre: "27.5x2.1 MTB",
+    handlebar: "Riser steel 31.8mm",
+    seatPost: "Alloy 27.2mm 300mm",
+    height: "Not specified",
+    bestFor: "MTB cycling"
+  },
+  "Coorg Cues 9s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/coorg-cues-9s",
+    price: "Visit omobikes.com",
+    category: "Hybrid / Road",
+    type: "Hybrid / Road",
+    frame: "Alloy (Multi Speed)",
+    wheel: "700c",
+    gears: "9 speed (1x9)",
+    gearBrand: "Shimano Cues",
+    brakes: "Mechanical disc brake",
+    fork: "Suspension fork (29T)",
+    rim: "Alloy Double Wall",
+    tyre: "700x35c",
+    handlebar: "Riser steel 31.8mm",
+    seatPost: "Alloy 27.2mm 300mm",
+    height: "Not specified",
+    bestFor: "Hybrid / Road cycling"
+  },
+  "Hampi Cues 9s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/hampi-cues-9s",
+    price: "Visit omobikes.com",
+    category: "Hybrid / Road",
+    type: "Hybrid / Road",
+    frame: "Alloy (Multi Speed)",
+    wheel: "700c",
+    gears: "9 speed (1x9)",
+    gearBrand: "Shimano Cues",
+    brakes: "Mechanical disc brake",
+    fork: "Rigid steel fork",
+    rim: "Alloy Double Wall",
+    tyre: "700x35c",
+    handlebar: "Riser steel 31.8mm",
+    seatPost: "Alloy 27.2mm 300mm",
+    height: "Not specified",
+    bestFor: "Hybrid / Road cycling"
+  },
+  "Ladakh Cues 9s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/ladakh-cues-9s",
+    price: "Visit omobikes.com",
+    category: "Hybrid / Road",
+    type: "Hybrid / Road",
+    frame: "Alloy (Multi Speed)",
+    wheel: "700c",
+    gears: "9 speed (1x9)",
+    gearBrand: "Shimano Cues",
+    brakes: "Mechanical disc brake",
+    fork: "Suspension fork (29T)",
+    rim: "Alloy Double Wall",
+    tyre: "700x35c",
+    handlebar: "Riser steel 31.8mm",
+    seatPost: "Alloy 27.2mm 300mm",
+    height: "Not specified",
+    bestFor: "Hybrid / Road cycling"
+  },
+  "Zozilla Pro 27s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/zozilla-pro-27s",
+    price: "Visit omobikes.com",
+    category: "MTB",
+    type: "MTB",
+    frame: "Alloy (Multi Speed)",
+    wheel: "29 inch",
+    gears: "27 speed (3x9)",
+    gearBrand: "Shimano Alivio",
+    brakes: "Mechanical disc brake",
+    fork: "Suspension fork (29T)",
+    rim: "Alloy Double Wall",
+    tyre: "27.5x2.1 MTB",
+    handlebar: "Riser steel 31.8mm",
+    seatPost: "Alloy 27.2mm 300mm",
+    height: "Not specified",
+    bestFor: "MTB cycling"
+  },
+  "Coorg Pro 27s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/coorg-pro-27s",
+    price: "Visit omobikes.com",
+    category: "Hybrid / Road",
+    type: "Hybrid / Road",
+    frame: "Alloy (Multi Speed)",
+    wheel: "700c",
+    gears: "27 speed (3x9)",
+    gearBrand: "Shimano Alivio",
+    brakes: "Mechanical disc brake",
+    fork: "Suspension fork (29T)",
+    rim: "Alloy Double Wall",
+    tyre: "700x35c",
+    handlebar: "Riser steel 31.8mm",
+    seatPost: "Alloy 27.2mm 300mm",
+    height: "Not specified",
+    bestFor: "Hybrid / Road cycling"
+  },
+  "Ladakh Pro 27s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/ladakh-pro-27s",
+    price: "Visit omobikes.com",
+    category: "Hybrid / Road",
+    type: "Hybrid / Road",
+    frame: "Alloy (Multi Speed)",
+    wheel: "700c",
+    gears: "27 speed (3x9)",
+    gearBrand: "Shimano Alivio",
+    brakes: "Mechanical disc brake",
+    fork: "Suspension fork (29T)",
+    rim: "Alloy Double Wall",
+    tyre: "700x35c",
+    handlebar: "Riser steel 31.8mm",
+    seatPost: "Alloy 27.2mm 300mm",
+    height: "Not specified",
+    bestFor: "Hybrid / Road cycling"
+  },
+  "Hampi Pro 27s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/hampi-pro-27s",
+    price: "Visit omobikes.com",
+    category: "Hybrid / Road",
+    type: "Hybrid / Road",
+    frame: "Alloy (Multi Speed)",
+    wheel: "700c",
+    gears: "27 speed (3x9)",
+    gearBrand: "Shimano Alivio",
+    brakes: "Mechanical disc brake",
+    fork: "Rigid steel fork",
+    rim: "Alloy Double Wall",
+    tyre: "700x35c",
+    handlebar: "Riser steel 31.8mm",
+    seatPost: "Alloy 27.2mm 300mm",
+    height: "Not specified",
+    bestFor: "Hybrid / Road cycling"
+  },
+  "Zozilla Pro 9s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/zozilla-pro-9s",
+    price: "Visit omobikes.com",
+    category: "MTB",
+    type: "MTB",
+    frame: "Alloy (Multi Speed)",
+    wheel: "29 inch",
+    gears: "9 speed (1x9)",
+    gearBrand: "Shimano Alivio",
+    brakes: "Mechanical disc brake",
+    fork: "Suspension fork (29T)",
+    rim: "Alloy Double Wall",
+    tyre: "27.5x2.1 MTB",
+    handlebar: "Riser steel 31.8mm",
+    seatPost: "Alloy 27.2mm 300mm",
+    height: "Not specified",
+    bestFor: "MTB cycling"
+  },
+  "Coorg Pro 9s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/coorg-pro-9s",
+    price: "Visit omobikes.com",
+    category: "Hybrid / Road",
+    type: "Hybrid / Road",
+    frame: "Alloy (Multi Speed)",
+    wheel: "700c",
+    gears: "9 speed (1x9)",
+    gearBrand: "Shimano Alivio",
+    brakes: "Mechanical disc brake",
+    fork: "Suspension fork (29T)",
+    rim: "Alloy Double Wall",
+    tyre: "700x35c",
+    handlebar: "Riser steel 31.8mm",
+    seatPost: "Alloy 27.2mm 300mm",
+    height: "Not specified",
+    bestFor: "Hybrid / Road cycling"
+  },
+  "Ladakh Pro 9s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/ladakh-pro-9s",
+    price: "Visit omobikes.com",
+    category: "Hybrid / Road",
+    type: "Hybrid / Road",
+    frame: "Alloy (Multi Speed)",
+    wheel: "700c",
+    gears: "9 speed (1x9)",
+    gearBrand: "Shimano Alivio",
+    brakes: "Mechanical disc brake",
+    fork: "Suspension fork (29T)",
+    rim: "Alloy Double Wall",
+    tyre: "700x35c",
+    handlebar: "Riser steel 31.8mm",
+    seatPost: "Alloy 27.2mm 300mm",
+    height: "Not specified",
+    bestFor: "Hybrid / Road cycling"
+  },
+  "Hampi Pro 9s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/hampi-pro-9s",
+    price: "Visit omobikes.com",
+    category: "Hybrid / Road",
+    type: "Hybrid / Road",
+    frame: "Alloy (Multi Speed)",
+    wheel: "700c",
+    gears: "9 speed (1x9)",
+    gearBrand: "Shimano Alivio",
+    brakes: "Mechanical disc brake",
+    fork: "Rigid steel fork",
+    rim: "Alloy Double Wall",
+    tyre: "700x35c",
+    handlebar: "Riser steel 31.8mm",
+    seatPost: "Alloy 27.2mm 300mm",
+    height: "Not specified",
+    bestFor: "Hybrid / Road cycling"
+  },
+  "Zozilla Prime 24s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/zozilla-prime-24s",
+    price: "Visit omobikes.com",
+    category: "MTB",
+    type: "MTB",
+    frame: "Alloy (Multi Speed)",
+    wheel: "29 inch",
+    gears: "24 speed (3x8)",
+    gearBrand: "Shimano Acera",
+    brakes: "Mechanical disc brake",
+    fork: "Suspension fork (29T)",
+    rim: "Alloy Double Wall",
+    tyre: "27.5x2.1 MTB",
+    handlebar: "Riser steel 31.8mm",
+    seatPost: "Alloy 27.2mm 300mm",
+    height: "Not specified",
+    bestFor: "MTB cycling"
+  },
+  "Coorg Prime 24s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/coorg-prime-24s",
+    price: "Visit omobikes.com",
+    category: "Hybrid / Road",
+    type: "Hybrid / Road",
+    frame: "Alloy (Multi Speed)",
+    wheel: "700c",
+    gears: "24 speed (3x8)",
+    gearBrand: "Shimano Acera",
+    brakes: "Mechanical disc brake",
+    fork: "Suspension fork (29T)",
+    rim: "Alloy Double Wall",
+    tyre: "700x35c",
+    handlebar: "Riser steel 31.8mm",
+    seatPost: "Alloy 27.2mm 300mm",
+    height: "Not specified",
+    bestFor: "Hybrid / Road cycling"
+  },
+  "Ladakh Prime 24s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/ladakh-prime-24s",
+    price: "Visit omobikes.com",
+    category: "Hybrid / Road",
+    type: "Hybrid / Road",
+    frame: "Alloy (Multi Speed)",
+    wheel: "700c",
+    gears: "24 speed (3x8)",
+    gearBrand: "Shimano Acera",
+    brakes: "Mechanical disc brake",
+    fork: "Suspension fork (29T)",
+    rim: "Alloy Double Wall",
+    tyre: "700x35c",
+    handlebar: "Riser steel 31.8mm",
+    seatPost: "Alloy 27.2mm 300mm",
+    height: "Not specified",
+    bestFor: "Hybrid / Road cycling"
+  },
+  "Hampi Prime 24s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/hampi-prime-24s",
+    price: "Visit omobikes.com",
+    category: "Hybrid / Road",
+    type: "Hybrid / Road",
+    frame: "Alloy (Multi Speed)",
+    wheel: "700c",
+    gears: "24 speed (3x8)",
+    gearBrand: "Shimano Acera",
+    brakes: "Mechanical disc brake",
+    fork: "Rigid steel fork",
+    rim: "Alloy Double Wall",
+    tyre: "700x35c",
+    handlebar: "Riser steel 31.8mm",
+    seatPost: "Alloy 27.2mm 300mm",
+    height: "Not specified",
+    bestFor: "Hybrid / Road cycling"
+  },
+  "Ooty Prime 24s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/ooty-prime-24s",
+    price: "Visit omobikes.com",
+    category: "MTB",
+    type: "MTB",
+    frame: "Alloy (Multi Speed)",
     wheel: "26 inch",
+    gears: "24 speed (3x8)",
+    gearBrand: "Shimano Acera",
+    brakes: "Mechanical disc brake",
+    fork: "Suspension fork (29T)",
+    rim: "Alloy Double Wall",
     tyre: "26x1.95 MTB",
-    rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Alloy sealed bearing hubs",
     handlebar: "Riser steel 31.8mm",
     seatPost: "Alloy 27.2mm 300mm",
-    isMTB: true,
-    isSingle: false
+    height: "Not specified",
+    bestFor: "MTB cycling"
   },
-  {
-    name: "Zozilla Prime 8s",
+  "Zozilla Prime 8s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/zozilla-prime-8s",
+    price: "Visit omobikes.com",
     category: "MTB",
-    gears: "8 speed (1×8)",
-    gearBrand: "Shimano Acera",
+    type: "MTB",
     frame: "Alloy (Multi Speed)",
-    fork: "Suspension fork (29T compatible)",
     wheel: "29 inch",
-    tyre: "27.5×2.1 MTB",
+    gears: "8 speed (1x8)",
+    gearBrand: "Shimano Acera",
+    brakes: "Mechanical disc brake",
+    fork: "Suspension fork (29T)",
     rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Alloy sealed bearing hubs",
+    tyre: "27.5x2.1 MTB",
     handlebar: "Riser steel 31.8mm",
     seatPost: "Alloy 27.2mm 300mm",
-    isMTB: true,
-    isSingle: false
+    height: "Not specified",
+    bestFor: "MTB cycling"
   },
-  {
-    name: "Coorg Prime 8s",
+  "Coorg Prime 8s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/coorg-prime-8s",
+    price: "Visit omobikes.com",
     category: "Hybrid / Road",
-    gears: "8 speed (1×8)",
-    gearBrand: "Shimano Acera",
+    type: "Hybrid / Road",
     frame: "Alloy (Multi Speed)",
-    fork: "Suspension fork (29T compatible)",
     wheel: "700c",
-    tyre: "700×35x Road-Hybrid",
+    gears: "8 speed (1x8)",
+    gearBrand: "Shimano Acera",
+    brakes: "Mechanical disc brake",
+    fork: "Suspension fork (29T)",
     rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Alloy sealed bearing hubs",
+    tyre: "700x35c",
     handlebar: "Riser steel 31.8mm",
     seatPost: "Alloy 27.2mm 300mm",
-    isMTB: false,
-    isSingle: false
+    height: "Not specified",
+    bestFor: "Hybrid / Road cycling"
   },
-  {
-    name: "Ladakh Prime 8s",
+  "Ladakh Prime 8s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/ladakh-prime-8s",
+    price: "Visit omobikes.com",
     category: "Hybrid / Road",
-    gears: "8 speed (1×8)",
-    gearBrand: "Shimano Acera",
+    type: "Hybrid / Road",
     frame: "Alloy (Multi Speed)",
-    fork: "Suspension fork (29T compatible)",
     wheel: "700c",
-    tyre: "700×35x Road-Hybrid",
+    gears: "8 speed (1x8)",
+    gearBrand: "Shimano Acera",
+    brakes: "Mechanical disc brake",
+    fork: "Suspension fork (29T)",
     rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Alloy sealed bearing hubs",
+    tyre: "700x35c",
     handlebar: "Riser steel 31.8mm",
     seatPost: "Alloy 27.2mm 300mm",
-    isMTB: false,
-    isSingle: false
+    height: "Not specified",
+    bestFor: "Hybrid / Road cycling"
   },
-  {
-    name: "Hampi Prime 8s",
+  "Hampi Prime 8s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/hampi-prime-8s",
+    price: "Visit omobikes.com",
     category: "Hybrid / Road",
-    gears: "8 speed (1×8)",
-    gearBrand: "Shimano Acera",
+    type: "Hybrid / Road",
     frame: "Alloy (Multi Speed)",
+    wheel: "700c",
+    gears: "8 speed (1x8)",
+    gearBrand: "Shimano Acera",
+    brakes: "Mechanical disc brake",
     fork: "Rigid steel fork",
-    wheel: "700c",
-    tyre: "700×35x Road-Hybrid",
     rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Alloy sealed bearing hubs",
+    tyre: "700x35c",
     handlebar: "Riser steel 31.8mm",
     seatPost: "Alloy 27.2mm 300mm",
-    isMTB: false,
-    isSingle: false
+    height: "Not specified",
+    bestFor: "Hybrid / Road cycling"
   },
-  {
-    name: "Ooty Prime 8s",
+  "Ooty Prime 8s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/ooty-prime-8s",
+    price: "Visit omobikes.com",
     category: "MTB",
-    gears: "8 speed (1×8)",
-    gearBrand: "Shimano Acera",
+    type: "MTB",
     frame: "Alloy (Multi Speed)",
-    fork: "Suspension fork (29T compatible)",
     wheel: "26 inch",
+    gears: "8 speed (1x8)",
+    gearBrand: "Shimano Acera",
+    brakes: "Mechanical disc brake",
+    fork: "Suspension fork (29T)",
+    rim: "Alloy Double Wall",
     tyre: "26x1.95 MTB",
-    rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Alloy sealed bearing hubs",
     handlebar: "Riser steel 31.8mm",
     seatPost: "Alloy 27.2mm 300mm",
-    isMTB: true,
-    isSingle: false
+    height: "Not specified",
+    bestFor: "MTB cycling"
   },
-  {
-    name: "Zozilla Ace 21s",
+  "Zozilla Ace 21s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/zozilla-ace-21s",
+    price: "Visit omobikes.com",
     category: "MTB",
-    gears: "21 speed (3×7)",
-    gearBrand: "Shimano Tourney",
+    type: "MTB",
     frame: "Alloy (Multi Speed)",
-    fork: "Suspension fork (29T compatible)",
     wheel: "29 inch",
-    tyre: "27.5×2.1 MTB",
+    gears: "21 speed (3x7)",
+    gearBrand: "Shimano Tourney",
+    brakes: "Mechanical disc brake",
+    fork: "Suspension fork (29T)",
     rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Steel sealed bearing hubs",
+    tyre: "27.5x2.1 MTB",
     handlebar: "Riser steel 31.8mm",
     seatPost: "Alloy 27.2mm 300mm",
-    isMTB: true,
-    isSingle: false
+    height: "Not specified",
+    bestFor: "MTB cycling"
   },
-  {
-    name: "Coorg Ace 21s",
+  "Coorg Ace 21s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/coorg-ace-21s",
+    price: "Visit omobikes.com",
     category: "Hybrid / Road",
-    gears: "21 speed (3×7)",
-    gearBrand: "Shimano Tourney",
+    type: "Hybrid / Road",
     frame: "Alloy (Multi Speed)",
-    fork: "Suspension fork (29T compatible)",
     wheel: "700c",
-    tyre: "700×35x Road-Hybrid",
+    gears: "21 speed (3x7)",
+    gearBrand: "Shimano Tourney",
+    brakes: "Mechanical disc brake",
+    fork: "Suspension fork (29T)",
     rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Steel sealed bearing hubs",
+    tyre: "700x35c",
     handlebar: "Riser steel 31.8mm",
     seatPost: "Alloy 27.2mm 300mm",
-    isMTB: false,
-    isSingle: false
+    height: "Not specified",
+    bestFor: "Hybrid / Road cycling"
   },
-  {
-    name: "Ladakh Ace 21s",
+  "Ladakh Ace 21s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/ladakh-ace-21s",
+    price: "Visit omobikes.com",
     category: "Hybrid / Road",
-    gears: "21 speed (3×7)",
-    gearBrand: "Shimano Tourney",
+    type: "Hybrid / Road",
     frame: "Alloy (Multi Speed)",
-    fork: "Suspension fork (29T compatible)",
     wheel: "700c",
-    tyre: "700×35x Road-Hybrid",
+    gears: "21 speed (3x7)",
+    gearBrand: "Shimano Tourney",
+    brakes: "Mechanical disc brake",
+    fork: "Suspension fork (29T)",
     rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Steel sealed bearing hubs",
+    tyre: "700x35c",
     handlebar: "Riser steel 31.8mm",
     seatPost: "Alloy 27.2mm 300mm",
-    isMTB: false,
-    isSingle: false
+    height: "Not specified",
+    bestFor: "Hybrid / Road cycling"
   },
-  {
-    name: "Hampi Ace 21s",
+  "Hampi Ace 21s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/hampi-ace-21s",
+    price: "Visit omobikes.com",
     category: "Hybrid / Road",
-    gears: "21 speed (3×7)",
-    gearBrand: "Shimano Tourney",
+    type: "Hybrid / Road",
     frame: "Alloy (Multi Speed)",
+    wheel: "700c",
+    gears: "21 speed (3x7)",
+    gearBrand: "Shimano Tourney",
+    brakes: "Mechanical disc brake",
     fork: "Rigid steel fork",
-    wheel: "700c",
-    tyre: "700×35x Road-Hybrid",
     rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Steel sealed bearing hubs",
+    tyre: "700x35c",
     handlebar: "Riser steel 31.8mm",
     seatPost: "Alloy 27.2mm 300mm",
-    isMTB: false,
-    isSingle: false
+    height: "Not specified",
+    bestFor: "Hybrid / Road cycling"
   },
-  {
-    name: "Ooty Ace 21s",
+  "Ooty Ace 21s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/ooty-ace-21s",
+    price: "Visit omobikes.com",
     category: "MTB",
-    gears: "21 speed (3×7)",
-    gearBrand: "Shimano Tourney",
+    type: "MTB",
     frame: "Alloy (Multi Speed)",
-    fork: "Suspension fork (29T compatible)",
     wheel: "26 inch",
+    gears: "21 speed (3x7)",
+    gearBrand: "Shimano Tourney",
+    brakes: "Mechanical disc brake",
+    fork: "Suspension fork (29T)",
+    rim: "Alloy Double Wall",
     tyre: "26x1.95 MTB",
-    rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Steel sealed bearing hubs",
     handlebar: "Riser steel 31.8mm",
     seatPost: "Alloy 27.2mm 300mm",
-    isMTB: true,
-    isSingle: false
+    height: "Not specified",
+    bestFor: "MTB cycling"
   },
-  {
-    name: "Zozilla Ace 7s",
+  "Zozilla Ace 7s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/zozilla-ace-7s",
+    price: "Visit omobikes.com",
     category: "MTB",
-    gears: "7 speed (1×7)",
-    gearBrand: "Shimano Tourney",
+    type: "MTB",
     frame: "Alloy (Multi Speed)",
-    fork: "Suspension fork (29T compatible)",
     wheel: "29 inch",
-    tyre: "27.5×2.1 MTB",
+    gears: "7 speed (1x7)",
+    gearBrand: "Shimano Tourney",
+    brakes: "Mechanical disc brake",
+    fork: "Suspension fork (29T)",
     rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Steel sealed bearing hubs",
+    tyre: "27.5x2.1 MTB",
     handlebar: "Riser steel 31.8mm",
     seatPost: "Alloy 27.2mm 300mm",
-    isMTB: true,
-    isSingle: false
+    height: "Not specified",
+    bestFor: "MTB cycling"
   },
-  {
-    name: "Coorg Ace 7s",
+  "Coorg Ace 7s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/coorg-ace-7s",
+    price: "Visit omobikes.com",
     category: "Hybrid / Road",
-    gears: "7 speed (1×7)",
-    gearBrand: "Shimano Tourney",
+    type: "Hybrid / Road",
     frame: "Alloy (Multi Speed)",
-    fork: "Suspension fork (29T compatible)",
     wheel: "700c",
-    tyre: "700×35x Road-Hybrid",
+    gears: "7 speed (1x7)",
+    gearBrand: "Shimano Tourney",
+    brakes: "Mechanical disc brake",
+    fork: "Suspension fork (29T)",
     rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Steel sealed bearing hubs",
+    tyre: "700x35c",
     handlebar: "Riser steel 31.8mm",
     seatPost: "Alloy 27.2mm 300mm",
-    isMTB: false,
-    isSingle: false
+    height: "Not specified",
+    bestFor: "Hybrid / Road cycling"
   },
-  {
-    name: "Ladakh Ace 7s",
+  "Ladakh Ace 7s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/ladakh-ace-7s",
+    price: "Visit omobikes.com",
     category: "Hybrid / Road",
-    gears: "7 speed (1×7)",
-    gearBrand: "Shimano Tourney",
+    type: "Hybrid / Road",
     frame: "Alloy (Multi Speed)",
-    fork: "Suspension fork (29T compatible)",
     wheel: "700c",
-    tyre: "700×35x Road-Hybrid",
+    gears: "7 speed (1x7)",
+    gearBrand: "Shimano Tourney",
+    brakes: "Mechanical disc brake",
+    fork: "Suspension fork (29T)",
     rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Steel sealed bearing hubs",
+    tyre: "700x35c",
     handlebar: "Riser steel 31.8mm",
     seatPost: "Alloy 27.2mm 300mm",
-    isMTB: false,
-    isSingle: false
+    height: "Not specified",
+    bestFor: "Hybrid / Road cycling"
   },
-  {
-    name: "Hampi Ace 7s",
+  "Hampi Ace 7s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/hampi-ace-7s",
+    price: "Visit omobikes.com",
     category: "Hybrid / Road",
-    gears: "7 speed (1×7)",
-    gearBrand: "Shimano Tourney",
+    type: "Hybrid / Road",
     frame: "Alloy (Multi Speed)",
+    wheel: "700c",
+    gears: "7 speed (1x7)",
+    gearBrand: "Shimano Tourney",
+    brakes: "Mechanical disc brake",
     fork: "Rigid steel fork",
-    wheel: "700c",
-    tyre: "700×35x Road-Hybrid",
     rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Steel sealed bearing hubs",
+    tyre: "700x35c",
     handlebar: "Riser steel 31.8mm",
     seatPost: "Alloy 27.2mm 300mm",
-    isMTB: false,
-    isSingle: false
+    height: "Not specified",
+    bestFor: "Hybrid / Road cycling"
   },
-  {
-    name: "Ooty Ace 7s",
+  "Ooty Ace 7s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/ooty-ace-7s",
+    price: "Visit omobikes.com",
     category: "MTB",
-    gears: "7 speed (1×7)",
-    gearBrand: "Shimano Tourney",
+    type: "MTB",
     frame: "Alloy (Multi Speed)",
-    fork: "Suspension fork (29T compatible)",
     wheel: "26 inch",
+    gears: "7 speed (1x7)",
+    gearBrand: "Shimano Tourney",
+    brakes: "Mechanical disc brake",
+    fork: "Suspension fork (29T)",
+    rim: "Alloy Double Wall",
     tyre: "26x1.95 MTB",
-    rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Steel sealed bearing hubs",
     handlebar: "Riser steel 31.8mm",
     seatPost: "Alloy 27.2mm 300mm",
-    isMTB: true,
-    isSingle: false
+    height: "Not specified",
+    bestFor: "MTB cycling"
   },
-  {
-    name: "Zozilla Lite 1s",
+  "Zozilla Lite 1s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/zozilla-lite-1s",
+    price: "Visit omobikes.com",
     category: "MTB",
-    gears: "Single Speed",
-    gearBrand: "No gears (single speed)",
+    type: "MTB",
     frame: "Alloy (Single Speed)",
-    fork: "Suspension fork (29T compatible)",
     wheel: "29 inch",
-    tyre: "27.5×2.1 MTB",
+    gears: "Single Speed",
+    gearBrand: "No gears",
+    brakes: "Mechanical disc brake",
+    fork: "Suspension fork (29T)",
     rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Steel sealed bearing hubs",
+    tyre: "27.5x2.1 MTB",
     handlebar: "Riser steel 31.8mm",
     seatPost: "Alloy 27.2mm 300mm",
-    isMTB: true,
-    isSingle: true
+    height: "Not specified",
+    bestFor: "MTB cycling"
   },
-  {
-    name: "Coorg Lite 1s",
+  "Coorg Lite 1s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/coorg-lite-1s",
+    price: "Visit omobikes.com",
     category: "Hybrid / Road",
-    gears: "Single Speed",
-    gearBrand: "No gears (single speed)",
+    type: "Hybrid / Road",
     frame: "Alloy (Single Speed)",
-    fork: "Suspension fork (29T compatible)",
     wheel: "700c",
-    tyre: "700×35x Road-Hybrid",
+    gears: "Single Speed",
+    gearBrand: "No gears",
+    brakes: "Mechanical disc brake",
+    fork: "Suspension fork (29T)",
     rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Steel sealed bearing hubs",
+    tyre: "700x35c",
     handlebar: "Riser steel 31.8mm",
     seatPost: "Alloy 27.2mm 300mm",
-    isMTB: false,
-    isSingle: true
+    height: "Not specified",
+    bestFor: "Hybrid / Road cycling"
   },
-  {
-    name: "Ladakh Lite 1s",
+  "Ladakh Lite 1s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/ladakh-lite-1s",
+    price: "Visit omobikes.com",
     category: "Hybrid / Road",
-    gears: "Single Speed",
-    gearBrand: "No gears (single speed)",
+    type: "Hybrid / Road",
     frame: "Alloy (Single Speed)",
-    fork: "Suspension fork (29T compatible)",
     wheel: "700c",
-    tyre: "700×35x Road-Hybrid",
+    gears: "Single Speed",
+    gearBrand: "No gears",
+    brakes: "Mechanical disc brake",
+    fork: "Suspension fork (29T)",
     rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Steel sealed bearing hubs",
+    tyre: "700x35c",
     handlebar: "Riser steel 31.8mm",
     seatPost: "Alloy 27.2mm 300mm",
-    isMTB: false,
-    isSingle: true
+    height: "Not specified",
+    bestFor: "Hybrid / Road cycling"
   },
-  {
-    name: "Hampi Lite 1s",
+  "Hampi Lite 1s": {
+    brand: "OmoBikes",
+    url: "https://omobikes.com/products/hampi-lite-1s",
+    price: "Visit omobikes.com",
     category: "Hybrid / Road",
-    gears: "Single Speed",
-    gearBrand: "No gears (single speed)",
+    type: "Hybrid / Road",
     frame: "Alloy (Single Speed)",
+    wheel: "700c",
+    gears: "Single Speed",
+    gearBrand: "No gears",
+    brakes: "Mechanical disc brake",
     fork: "Rigid steel fork",
-    wheel: "700c",
-    tyre: "700×35x Road-Hybrid",
     rim: "Alloy Double Wall",
-    brake: "Mechanical disc brake",
-    hub: "Steel sealed bearing hubs",
+    tyre: "700x35c",
     handlebar: "Riser steel 31.8mm",
     seatPost: "Alloy 27.2mm 300mm",
-    isMTB: false,
-    isSingle: true
+    height: "Not specified",
+    bestFor: "Hybrid / Road cycling"
   },
-];
-var series = {
-  "Zozila Cues": ["Zozila Cues 18s", "Zozila Cues 9s"],
-  "Coorg Cues": ["Coorg Cues 18s", "Coorg Cues 9s"],
-  "Hampi Cues": ["Hampi Cues 18s", "Hampi Cues 9s"],
-  "Ladakh Cues": ["Ladakh Cues 18s", "Ladakh Cues 9s"],
-  "Zozilla Pro": ["Zozilla Pro 27s", "Zozilla Pro 9s"],
-  "Coorg Pro": ["Coorg Pro 27s", "Coorg Pro 9s"],
-  "Ladakh Pro": ["Ladakh Pro 27s", "Ladakh Pro 9s"],
-  "Hampi Pro": ["Hampi Pro 27s", "Hampi Pro 9s"],
-  "Zozilla Prime": ["Zozilla Prime 24s", "Zozilla Prime 8s"],
-  "Coorg Prime": ["Coorg Prime 24s", "Coorg Prime 8s"],
-  "Ladakh Prime": ["Ladakh Prime 24s", "Ladakh Prime 8s"],
-  "Hampi Prime": ["Hampi Prime 24s", "Hampi Prime 8s"],
-  "Ooty Prime": ["Ooty Prime 24s", "Ooty Prime 8s"],
-  "Zozilla Ace": ["Zozilla Ace 21s", "Zozilla Ace 7s"],
-  "Coorg Ace": ["Coorg Ace 21s", "Coorg Ace 7s"],
-  "Ladakh Ace": ["Ladakh Ace 21s", "Ladakh Ace 7s"],
-  "Hampi Ace": ["Hampi Ace 21s", "Hampi Ace 7s"],
-  "Ooty Ace": ["Ooty Ace 21s", "Ooty Ace 7s"],
-  "Zozilla Lite": ["Zozilla Lite 1s"],
-  "Coorg Lite": ["Coorg Lite 1s"],
-  "Ladakh Lite": ["Ladakh Lite 1s"],
-  "Hampi Lite": ["Hampi Lite 1s"],
 };
 
-// Populate dropdowns
-function omoInit() {
-  var sA = document.getElementById('omoSelA');
-  var sB = document.getElementById('omoSelB');
-  Object.keys(series).forEach(function(s) {
+
+var brandGroups = {
+  "OmoBikes": [
+    "Coorg Cues",
+    "Zozila Prime",
+    "Ladakh Lite",
+    "Black Hawk",
+    "Hampi Lite",
+    "Zozila Cues 18s",
+    "Coorg Cues 18s",
+    "Hampi Cues 18s",
+    "Ladakh Cues 18s",
+    "Zozila Cues 9s",
+    "Coorg Cues 9s",
+    "Hampi Cues 9s",
+    "Ladakh Cues 9s",
+    "Zozilla Pro 27s",
+    "Coorg Pro 27s",
+    "Ladakh Pro 27s",
+    "Hampi Pro 27s",
+    "Zozilla Pro 9s",
+    "Coorg Pro 9s",
+    "Ladakh Pro 9s",
+    "Hampi Pro 9s",
+    "Zozilla Prime 24s",
+    "Coorg Prime 24s",
+    "Ladakh Prime 24s",
+    "Hampi Prime 24s",
+    "Ooty Prime 24s",
+    "Zozilla Prime 8s",
+    "Coorg Prime 8s",
+    "Ladakh Prime 8s",
+    "Hampi Prime 8s",
+    "Ooty Prime 8s",
+    "Zozilla Ace 21s",
+    "Coorg Ace 21s",
+    "Ladakh Ace 21s",
+    "Hampi Ace 21s",
+    "Ooty Ace 21s",
+    "Zozilla Ace 7s",
+    "Coorg Ace 7s",
+    "Ladakh Ace 7s",
+    "Hampi Ace 7s",
+    "Ooty Ace 7s",
+    "Zozilla Lite 1s",
+    "Coorg Lite 1s",
+    "Ladakh Lite 1s",
+    "Hampi Lite 1s"
+  ],
+  "Cradiac": [
+    "Cradiac Gunner Pro 21",
+    "Cradiac Machine Lite 21",
+    "Cradiac XC 3000 Lite"
+  ],
+  "Decathlon": [
+    "Rockrider Explore 40",
+    "Rockrider ST120",
+    "Riverside 500"
+  ],
+  "Kross": [
+    "Kross Berlin",
+    "Kross Emerg 27.5T",
+    "Kross Hopper 27.5T"
+  ]
+};
+
+function init() {
+  var sA = document.getElementById('selA');
+  var sB = document.getElementById('selB');
+  Object.keys(brandGroups).sort().forEach(function(brand) {
     var ogA = document.createElement('optgroup');
     var ogB = document.createElement('optgroup');
-    ogA.label = s; ogB.label = s;
-    series[s].forEach(function(n) {
+    ogA.label = brand;
+    ogB.label = brand;
+    brandGroups[brand].forEach(function(n) {
       ogA.innerHTML += '<option value="' + n + '">' + n + '</option>';
       ogB.innerHTML += '<option value="' + n + '">' + n + '</option>';
     });
@@ -970,128 +1233,133 @@ function omoInit() {
   });
 }
 
-function getCycle(name) {
-  for (var i = 0; i < cycles.length; i++) {
-    if (cycles[i].name === name) return cycles[i];
-  }
-  return null;
-}
-
-var shimRank = {cues:6, alivio:5, acera:4, altus:3, tourney:2};
-function shimScore(s) {
-  s = s.toLowerCase();
-  var r = 0;
-  Object.keys(shimRank).forEach(function(k) { if (s.indexOf(k) > -1) r = shimRank[k]; });
-  return r;
-}
-
-function omoCompare() {
-  var nameA = document.getElementById('omoSelA').value;
-  var nameB = document.getElementById('omoSelB').value;
-  var err = document.getElementById('omoErr');
+function compare() {
+  var nameA = document.getElementById('selA').value;
+  var nameB = document.getElementById('selB').value;
+  var err = document.getElementById('errMsg');
   err.style.display = 'none';
 
   if (!nameA || !nameB) {
-    err.textContent = 'Please select both Cycle A and Cycle B.';
+    err.textContent = 'Please select both cycles to compare.';
     err.style.display = 'block'; return;
   }
   if (nameA === nameB) {
     err.textContent = 'Please select two different cycles.';
     err.style.display = 'block'; return;
   }
+  if (!cycles[nameA]) {
+    err.textContent = '"' + nameA + '" is not in our list.';
+    err.style.display = 'block'; return;
+  }
+  if (!cycles[nameB]) {
+    err.textContent = '"' + nameB + '" is not in our list.';
+    err.style.display = 'block'; return;
+  }
 
-  var a = getCycle(nameA);
-  var b = getCycle(nameB);
+  var a = cycles[nameA];
+  var b = cycles[nameB];
 
-  // Warning: MTB vs Hybrid
-  if ((a.isMTB && !b.isMTB) || (!a.isMTB && b.isMTB)) {
+  // MTB vs Hybrid warning
+  var isMTB_A = a.category.toLowerCase().indexOf('mtb') > -1;
+  var isMTB_B = b.category.toLowerCase().indexOf('mtb') > -1;
+  var isHyb_A = a.category.toLowerCase().indexOf('hybrid') > -1 || a.category.toLowerCase().indexOf('road') > -1;
+  var isHyb_B = b.category.toLowerCase().indexOf('hybrid') > -1 || b.category.toLowerCase().indexOf('road') > -1;
+
+  if ((isMTB_A && isHyb_B) || (isMTB_B && isHyb_A)) {
     var ok = confirm(
-      'Warning: You are comparing an MTB cycle with a Hybrid/Road cycle.\n\n' +
-      'MTB cycles are built for off-road trails and rough terrain.\n' +
-      'Hybrid cycles are built for city roads and fitness riding.\n\n' +
-      'This comparison may not be meaningful.\n\n' +
+      'Warning: You are comparing an MTB with a Hybrid cycle.\n\n' +
+      'MTB: off-road, trails, rough terrain\n' +
+      'Hybrid: city roads, fitness riding\n\n' +
+      'The comparison may not be meaningful.\n\n' +
       'Do you still want to continue?'
     );
     if (!ok) return;
   }
 
-  // Build headers
-  document.getElementById('omoHeadA').innerHTML =
-    '<div class="omo-rh-name">' + nameA + '</div>' +
-    '<div class="omo-rh-cat">' + a.category + '</div>';
-  document.getElementById('omoHeadB').innerHTML =
-    '<div class="omo-rh-name">' + nameB + '</div>' +
-    '<div class="omo-rh-cat">' + b.category + '</div>';
+  // Geared vs Single speed warning
+  var isSS_A = a.gears.toLowerCase().indexOf('single') > -1;
+  var isSS_B = b.gears.toLowerCase().indexOf('single') > -1;
+  if (isSS_A !== isSS_B) {
+    var ok2 = confirm(
+      'Warning: You are comparing a Geared cycle with a Single Speed cycle.\n\n' +
+      nameA + ': ' + a.gears + '\n' +
+      nameB + ': ' + b.gears + '\n\n' +
+      'These serve very different purposes.\n\n' +
+      'Do you still want to continue?'
+    );
+    if (!ok2) return;
+  }
 
-  // Build table
+  // Header
+  document.getElementById('cycleHeads').innerHTML =
+    '<div class="lbl">Spec</div>' +
+    '<div><div class="name">' + nameA + '</div><div class="brand">' + a.brand + '</div></div>' +
+    '<div><div class="name">' + nameB + '</div><div class="brand">' + b.brand + '</div></div>';
+
+  document.getElementById('buyA').href = a.url;
+  document.getElementById('buyB').href = b.url;
+
   var rows = [
-    {key:'Category',   vA:a.category,  vB:b.category,  cmp:'none',    cat:true},
-    {key:'Gears',      vA:a.gears,     vB:b.gears,     cmp:'none'},
-    {key:'Gear Brand', vA:a.gearBrand, vB:b.gearBrand, cmp:'shimano'},
-    {key:'Brake',      vA:a.brake,     vB:b.brake,     cmp:'brake'},
-    {key:'Frame',      vA:a.frame,     vB:b.frame,     cmp:'none'},
-    {key:'Fork',       vA:a.fork,      vB:b.fork,      cmp:'fork'},
-    {key:'Wheel',      vA:a.wheel,     vB:b.wheel,     cmp:'none'},
-    {key:'Tyre',       vA:a.tyre,      vB:b.tyre,      cmp:'none'},
-    {key:'Rim',        vA:a.rim,       vB:b.rim,       cmp:'none'},
-    {key:'Hub',        vA:a.hub,       vB:b.hub,       cmp:'hub'},
-    {key:'Handlebar',  vA:a.handlebar, vB:b.handlebar, cmp:'none'},
-    {key:'Seat Post',  vA:a.seatPost,  vB:b.seatPost,  cmp:'none'},
+    { key: 'Price',      vA: a.price,     vB: b.price,     cmp: 'none',    isPrice: true  },
+    { key: 'Category',   vA: a.category,  vB: b.category,  cmp: 'none'    },
+    { key: 'Frame',      vA: a.frame,     vB: b.frame,     cmp: 'none'    },
+    { key: 'Wheel',      vA: a.wheel,     vB: b.wheel,     cmp: 'none'    },
+    { key: 'Gears',      vA: a.gears,     vB: b.gears,     cmp: 'none'    },
+    { key: 'Gear Brand', vA: a.gearBrand, vB: b.gearBrand, cmp: 'shimano' },
+    { key: 'Brakes',     vA: a.brakes,    vB: b.brakes,    cmp: 'brakes'  },
+    { key: 'Fork',       vA: a.fork,      vB: b.fork,      cmp: 'none'    },
+    { key: 'Rim',        vA: a.rim,       vB: b.rim,       cmp: 'none'    },
+    { key: 'Tyre',       vA: a.tyre,      vB: b.tyre,      cmp: 'none'    },
+    { key: 'Handlebar',  vA: a.handlebar, vB: b.handlebar, cmp: 'none'    },
+    { key: 'Best For',   vA: a.bestFor,   vB: b.bestFor,   cmp: 'none'    },
   ];
+
+  var shimRank = {cues:6, alivio:5, acera:4, altus:3, tourney:2};
+  function shimScore(s) {
+    s = s.toLowerCase();
+    var r = 0;
+    Object.keys(shimRank).forEach(function(k){ if(s.indexOf(k)>-1) r=shimRank[k]; });
+    return r;
+  }
 
   var html = '';
   rows.forEach(function(r) {
     var clsA = '', clsB = '';
-    var same = r.vA === r.vB;
-
-    if (!same) {
-      if (r.cmp === 'shimano') {
-        var sA = shimScore(r.vA), sB = shimScore(r.vB);
-        if (sA > sB) clsA = 'win'; else if (sB > sA) clsB = 'win';
-      }
-      if (r.cmp === 'brake') {
-        var hA = r.vA.toLowerCase().indexOf('hydraulic') > -1;
-        var hB = r.vB.toLowerCase().indexOf('hydraulic') > -1;
-        if (hA && !hB) clsA = 'win'; else if (hB && !hA) clsB = 'win';
-      }
-      if (r.cmp === 'fork') {
-        var sA = r.vA.toLowerCase().indexOf('suspension') > -1;
-        var sB = r.vB.toLowerCase().indexOf('suspension') > -1;
-        if (sA && !sB) clsA = 'win'; else if (sB && !sA) clsB = 'win';
-      }
-      if (r.cmp === 'hub') {
-        var aA = r.vA.toLowerCase().indexOf('alloy') > -1;
-        var aB = r.vB.toLowerCase().indexOf('alloy') > -1;
-        if (aA && !aB) clsA = 'win'; else if (aB && !aA) clsB = 'win';
-      }
+    if (r.cmp === 'shimano') {
+      var sA = shimScore(r.vA), sB = shimScore(r.vB);
+      if (sA > sB) clsA = 'win'; else if (sB > sA) clsB = 'win';
     }
-
-    var rowCls = r.cat ? 'omo-cat-row' : '';
-    var sameCls = same ? 'same' : '';
-    html += '<tr class="' + rowCls + '">';
-    html += '<td class="omo-tkey">' + r.key + '</td>';
-    html += '<td class="omo-tval ' + clsA + ' ' + sameCls + '">' + r.vA + '</td>';
-    html += '<td class="omo-tval ' + clsB + ' ' + sameCls + '">' + r.vB + '</td>';
-    html += '</tr>';
+    if (r.cmp === 'brakes') {
+      var hA = r.vA.toLowerCase().indexOf('hydraulic') > -1;
+      var hB = r.vB.toLowerCase().indexOf('hydraulic') > -1;
+      if (hA && !hB) clsA = 'win'; else if (hB && !hA) clsB = 'win';
+    }
+    var naA = (r.vA === 'Not specified' || r.vA === 'Not listed') ? 'na' : '';
+    var naB = (r.vB === 'Not specified' || r.vB === 'Not listed') ? 'na' : '';
+    html += '<div class="row' + (r.isPrice ? ' price-row' : '') + '">' +
+      '<div class="key">' + r.key + '</div>' +
+      '<div class="val ' + clsA + ' ' + naA + '">' + r.vA + '</div>' +
+      '<div class="val ' + clsB + ' ' + naB + '">' + r.vB + '</div>' +
+      '</div>';
   });
 
-  document.getElementById('omoTable').innerHTML = html;
-  document.getElementById('omoSelector').style.display = 'none';
-  document.getElementById('omoResult').style.display = 'block';
+  document.getElementById('tableRows').innerHTML = html;
+  document.getElementById('selectorView').style.display = 'none';
+  document.getElementById('resultView').style.display = 'block';
   window.scrollTo(0, 0);
 }
 
-function omoAgain() {
-  document.getElementById('omoResult').style.display = 'none';
-  document.getElementById('omoSelector').style.display = 'block';
+function goBack() {
+  document.getElementById('resultView').style.display = 'none';
+  document.getElementById('selectorView').style.display = 'block';
   window.scrollTo(0, 0);
 }
 
-function omoTop() {
-  window.scrollTo(0, 0);
+function exitApp() {
+  window.location.href = 'home.html';
 }
 
-document.addEventListener('DOMContentLoaded', function() { omoInit(); });
+document.addEventListener('DOMContentLoaded', function() { init(); });
 </script>
 </body>
 </html>
