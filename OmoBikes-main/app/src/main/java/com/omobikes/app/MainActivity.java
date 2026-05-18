@@ -38,6 +38,15 @@ public class MainActivity extends AppCompatActivity {
         settings.setDisplayZoomControls(false);
         settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
 
+        // --- CRITICAL ADDITIONS FOR THE SEARCH DROPDOWN ENGINE ---
+        // Allows JavaScript context requests to read file pathways internally
+        settings.setAllowFileAccess(true);
+        settings.setAllowContentAccess(true);
+        // Allows local assets to safely manage elements via internal DOM execution loops
+        settings.setAllowFileAccessFromFileURLs(true);
+        settings.setAllowUniversalAccessFromFileURLs(true);
+        // --------------------------------------------------------
+
         webView.setWebChromeClient(new WebChromeClient());
 
         webView.setWebViewClient(new WebViewClient() {
@@ -77,7 +86,8 @@ public class MainActivity extends AppCompatActivity {
                 .setTitle("Exit OmoBikes")
                 .setMessage("Are you sure you want to exit?")
                 .setPositiveButton("Exit", (dialog, which) -> {
-                    super.onBackPressed();
+                    // Fix deprecation routing safely
+                    MainActivity.super.onBackPressed();
                     finish();
                 })
                 .setNegativeButton("Stay", null)
