@@ -3,8 +3,6 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-</head>
-<body>
 <style>
     /* Styling for a clean, modern bike shop feel */
     .hero-banner { background: #1b5e20; padding: 28px 16px; text-align: center; margin-bottom: 20px; }
@@ -16,8 +14,30 @@
     @media (max-width: 600px) { .selection-grid { grid-template-columns: 1fr; } }
     
     .select-box label { display: block; font-weight: bold; margin-bottom: 8px; color: #1b5e20; font-size: 14px; text-transform: uppercase; }
-    .select-box select { width: 100%; padding: 12px; border: 2px solid #c8e6c9; border-radius: 8px; font-size: 15px; cursor: pointer; }
     
+    /* Searchable Custom Dropdown Styles */
+    .dropdown-wrapper { position: relative; width: 100%; }
+    .search-input { width: 100%; padding: 12px; border: 2px solid #c8e6c9; border-radius: 8px; font-size: 15px; box-sizing: border-box; background: #fff; }
+    .search-input:focus { outline: none; border-color: #1b5e20; }
+    
+    .custom-dropdown-list { 
+        position: absolute; 
+        top: 100%; 
+        left: 0; 
+        right: 0; 
+        background: #fff; 
+        border: 1px solid #c8e6c9; 
+        border-radius: 8px; 
+        max-height: 220px; 
+        overflow-y: auto; 
+        z-index: 1000; 
+        display: none; 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .dropdown-item { padding: 12px; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f5f5f5; color: #333; }
+    .dropdown-item:hover { background: #e8f5e9; color: #1b5e20; }
+    .no-results { padding: 12px; color: #999; font-size: 14px; font-style: italic; text-align: center; }
+
     .btn-compare { width: 100%; background: #1b5e20; color: #fff; padding: 15px; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; transition: background 0.3s; }
     .btn-compare:hover { background: #2e7d32; }
 
@@ -37,40 +57,50 @@
 
     .btn-reset { margin-top: 20px; background: transparent; border: 2px solid #1b5e20; color: #1b5e20; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
   </style>
+</head>
+<body>
 
-  <div style="padding:12px 16px 0;">
+<div style="padding: 27px 16px 0;">
   <button onclick="window.location.href='home.html'" style="background:#1565c0;border:none;border-radius:20px;padding:8px 18px;font-size:13px;color:#fff;cursor:pointer;">&#8592; Home</button>
 </div>
+
 <div class="hero-banner">
     <h2>Find Your Perfect Ride</h2>
     <p>Compare components, gears, and frames across our entire 2026 collection</p>
-  </div>
+</div>
 
-  <div class="selection-panel" id="panelView">
+<div class="selection-panel" id="panelView">
     <div class="selection-grid">
       <div class="select-box">
         <label>Select First Bicycle</label>
-        <select id="bikeA"><option value="">-- Choose a Model --</option></select>
+        <div class="dropdown-wrapper">
+          <input type="text" id="bikeASearch" class="search-input" placeholder="Type to search model..." autocomplete="off">
+          <input type="hidden" id="bikeA" value="">
+          <div id="bikeAList" class="custom-dropdown-list"></div>
+        </div>
       </div>
       <div class="select-box">
         <label>Select Second Bicycle</label>
-        <select id="bikeB"><option value="">-- Choose a Model --</option></select>
+        <div class="dropdown-wrapper">
+          <input type="text" id="bikeBSearch" class="search-input" placeholder="Type to search model..." autocomplete="off">
+          <input type="hidden" id="bikeB" value="">
+          <div id="bikeBList" class="custom-dropdown-list"></div>
+        </div>
       </div>
     </div>
     <button class="btn-compare" onclick="runComparison()">Compare Specifications</button>
     <p id="errorMsg" style="color: #c62828; display: none; margin-top: 15px; font-weight: bold; text-align: center;"></p>
-  </div>
+</div>
 
-  <div class="comparison-container" id="resultsView">
+<div class="comparison-container" id="resultsView">
     <table class="comp-table">
       <thead id="tableHead"></thead>
       <tbody id="tableBody"></tbody>
     </table>
     <button class="btn-reset" onclick="resetPage()">← Back to Selection</button>
-  </div>
+</div>
 
-  <script>
-    // Full dataset from "Product Pricing Master 2026 - CYCLE SPECS 26.csv"
+<script>
     const bikeData = {
       "Zozila Cues 18s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-SUS-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-27.5-29X2.1-RALSON", "RD": "RD-SHIMANO-CUES-U4000", "FD": "FD-SHIMANO-U4000", "Shifter R": "SHIFTER-R-9S-SHIMANO-U4000", "Shifter L": "SHIFTER-L-2S-SHIMANO-U4000", "Crank": "CRANK-SHIMANO-U4000-2S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-ALLOY-SEALED-QR", "Hub R": "HUB-REAR-ALLOY-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-PVC-BIGBEN", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-9S-LG500-SHIMANO", "FW/CS": "CS-9S-SHIMANO-LG300"},
       "Coorg Cues 18s": {"Frame": "FRAME-ALLOY-MS", "Fork": "FORK-SUS-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-700X35-RALSON", "RD": "RD-SHIMANO-CUES-U4000", "FD": "FD-SHIMANO-U4000", "Shifter R": "SHIFTER-R-9S-SHIMANO-U4000", "Shifter L": "SHIFTER-L-2S-SHIMANO-U4000", "Crank": "CRANK-SHIMANO-U4000-2S", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-ALLOY-SEALED-QR", "Hub R": "HUB-REAR-ALLOY-SEALED-QR-CS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-PVC-BIGBEN", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-9S-LG500-SHIMANO", "FW/CS": "CS-9S-SHIMANO-LG300"},
@@ -114,7 +144,6 @@
       "Hampi Lite 1s": {"Frame": "FRAME-ALLOY-SS", "Fork": "FORK-RIGID-STEEL-THLS-29T", "Brake": "BRAKE-MDB-GENERIC", "Rim": "RIM-DW-ALLOY-29T-36H", "Tyre": "TYRE-700X35-RALSON", "RD": "N/A", "FD": "N/A", "Shifter R": "N/A", "Shifter L": "N/A", "Crank": "CRANK-COTTERLESS-STEEL", "BB": "BB-SEALED-KENLI", "Hub F": "HUB-FRONT-STEEL-SEALED-QR", "Hub R": "HUB-REAR-STEEL-SEALED-QR-SS", "Handlebar": "HANDLE-RISER-STEEL-31.8MM", "Stem": "STEM-ALLOY-80MM", "Seat Post": "SEATPOST-ALLOY-27.2MM-300MM", "Pedal": "PEDAL-PVC-BIGBEN", "Grips": "GRIP-RUBBER", "Chain": "CHAIN-SS-PYC", "FW/CS": "FW-18T-SINGLE-SPEED"}
     };
 
-    // Category structure from "Data for omo bikes parts - rough.csv"
     const tableStructure = [
       { type: 'cat', label: 'Main Features' },
       { type: 'row', label: 'Frame', key: 'Frame' },
@@ -143,14 +172,68 @@
       { type: 'row', label: 'Grips', key: 'Grips' }
     ];
 
+    const sortedBikes = Object.keys(bikeData).sort();
+
     function init() {
-      const sortedBikes = Object.keys(bikeData).sort();
-      const selA = document.getElementById('bikeA');
-      const selB = document.getElementById('bikeB');
-      
-      sortedBikes.forEach(name => {
-        selA.options.add(new Option(name, name));
-        selB.options.add(new Option(name, name));
+      setupSearchDropdown('bikeASearch', 'bikeAList', 'bikeA');
+      setupSearchDropdown('bikeBSearch', 'bikeBList', 'bikeB');
+
+      // Close open custom dropdowns when clicking outside
+      document.addEventListener('click', function(e) {
+        if (!e.target.closest('.dropdown-wrapper')) {
+          document.getElementById('bikeAList').style.display = 'none';
+          document.getElementById('bikeBList').style.display = 'none';
+        }
+      });
+    }
+
+    function setupSearchDropdown(inputId, listId, hiddenId) {
+      const input = document.getElementById(inputId);
+      const list = document.getElementById(listId);
+      const hidden = document.getElementById(hiddenId);
+
+      function rebuildList(filterText) {
+        list.innerHTML = '';
+        filterText = filterText.toLowerCase().trim();
+        let matchCount = 0;
+
+        sortedBikes.forEach(name => {
+          if (name.toLowerCase().indexOf(filterText) !== -1 || name.toLowerCase().includes(filterText)) {
+            matchCount++;
+            const item = document.createElement('div');
+            item.className = 'dropdown-item';
+            item.textContent = name;
+
+            const selectionHandler = function(e) {
+              e.preventDefault();
+              input.value = name;
+              hidden.value = name;
+              list.style.display = 'none';
+            };
+
+            // Double input touch handling to stay completely operational inside android wrapper frameworks
+            item.addEventListener('click', selectionHandler);
+            item.addEventListener('touchend', selectionHandler);
+            list.appendChild(item);
+          }
+        });
+
+        if (matchCount === 0) {
+          const noResults = document.createElement('div');
+          noResults.className = 'no-results';
+          noResults.textContent = 'No matching models found';
+          list.appendChild(noResults);
+        }
+      }
+
+      input.addEventListener('focus', function() {
+        rebuildList(input.value);
+        list.style.display = 'block';
+      });
+
+      input.addEventListener('input', function() {
+        hidden.value = ''; // Reset actual selected value on active typing
+        rebuildList(input.value);
       });
     }
 
@@ -160,7 +243,7 @@
       const error = document.getElementById('errorMsg');
 
       if (!valA || !valB) {
-        error.textContent = "⚠ Please select two bicycles to compare.";
+        error.textContent = "⚠ Please select two valid bicycles from the search listings.";
         error.style.display = 'block';
         return;
       }
@@ -180,7 +263,6 @@
       const bikeA = bikeData[bikeAName];
       const bikeB = bikeData[bikeBName];
       
-      // Build Header
       document.getElementById('tableHead').innerHTML = `
         <tr class="comp-header">
           <th>Specifications</th>
@@ -189,7 +271,6 @@
         </tr>
       `;
 
-      // Build Body
       let bodyHtml = '';
       tableStructure.forEach(item => {
         if (item.type === 'cat') {
@@ -210,10 +291,15 @@
     function resetPage() {
       document.getElementById('resultsView').style.display = 'none';
       document.getElementById('panelView').style.display = 'block';
+      
+      // Clear values on return
+      document.getElementById('bikeASearch').value = '';
+      document.getElementById('bikeBSearch').value = '';
+      document.getElementById('bikeA').value = '';
+      document.getElementById('bikeB').value = '';
     }
 
     init();
   </script>
-</div>
 </body>
 </html>
